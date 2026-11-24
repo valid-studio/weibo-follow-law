@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>微博关注列表定律</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="wbr-pop-app">
+    <header class="wbr-pop-header">
+      <div class="wbr-pop-brand">
+        <img src="icons/icon48.png" srcset="icons/icon48.png 1x, icons/icon128.png 2x" alt="微博关注列表定律" width="32" height="32" />
+        <div class="wbr-pop-title-col">
+          <h1>微博关注列表定律</h1>
+          <div id="wbr-account-line" class="wbr-pop-sub">正在检查微博登录状态...</div>
+        </div>
+      </div>
+      <label class="wbr-switch" title="开启或暂停保护">
+        <input id="wbr-opt-enabled" type="checkbox" />
+        <span class="wbr-slider"></span>
+      </label>
+    </header>
+
+    <div id="wbr-breaker-alert" class="wbr-alert hidden">
+      <div id="wbr-breaker-text" class="wbr-alert-text">请求有点快，休息冷却中（约 10 分钟后自动恢复，本地屏蔽仍正常生效）</div>
+      <button id="wbr-btn-reset-breaker" type="button" class="wbr-btn wbr-btn-warn-xs">立即恢复</button>
+    </div>
+
+    <section class="wbr-mode-card">
+      <div class="wbr-mode-seg" role="tablist" aria-label="检测模式">
+        <button id="wbr-mode-manual" type="button" role="tab" class="wbr-mode-btn is-active" data-mode="manual" aria-selected="true">👆 手动按需</button>
+        <button id="wbr-mode-auto" type="button" role="tab" class="wbr-mode-btn" data-mode="auto" aria-selected="false">⚡ 自动检测</button>
+      </div>
+      <div id="wbr-mode-desc" class="wbr-mode-desc">默认省流零打扰：鼠标悬停用户名点「查成分」，或点击下方按钮按需扫描</div>
+    </section>
+
+    <section class="wbr-pop-primary">
+      <button id="wbr-btn-scan-page" type="button" class="wbr-btn wbr-btn-primary">🔍 扫描当前页可见用户</button>
+    </section>
+
+    <section class="wbr-toggle-list">
+      <label class="wbr-toggle-row">
+        <span>在微博群聊中同步折叠已屏蔽用户</span>
+        <input id="wbr-opt-chatsync" type="checkbox" />
+      </label>
+    </section>
+
+    <section class="wbr-pop-bottom-row">
+      <button id="wbr-btn-dashboard" type="button" class="wbr-btn wbr-btn-secondary wbr-btn-grow">屏蔽名单 (0) 与规则设置</button>
+      <button id="wbr-btn-sync-blocklist" type="button" class="wbr-btn wbr-btn-secondary">同步黑名单</button>
+    </section>
+
+    <footer id="wbr-pop-status" class="wbr-pop-footer">
+      100% 本地运行 · 零 cookies 权限 · 数据不离开浏览器
+    </footer>
+  </div>
+  <script src="shared/radar_engine.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

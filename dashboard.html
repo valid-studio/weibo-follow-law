@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>微博关注列表定律 · 管理与批量排查</title>
+  <link rel="stylesheet" href="dashboard.css" />
+</head>
+<body>
+  <div class="wbr-dash">
+    <header class="wbr-dash-header">
+      <div class="wbr-dash-brand">
+        <img src="icons/icon48.png" srcset="icons/icon48.png 1x, icons/icon128.png 2x" alt="微博关注列表定律" width="36" height="36" />
+        <div>
+          <h1>微博关注列表定律</h1>
+          <div id="wbr-dash-account" class="wbr-dash-sub">正在检查微博登录状态...</div>
+        </div>
+      </div>
+      <nav class="wbr-tabs">
+        <button class="wbr-tab active" data-tab="muted" type="button">屏蔽名单</button>
+        <button class="wbr-tab" data-tab="scanner" type="button">批量排查与清理</button>
+        <button class="wbr-tab" data-tab="features" type="button">偏好与规则</button>
+      </nav>
+    </header>
+
+    <div id="wbr-dash-breaker" class="wbr-breaker-banner hidden">
+      <span id="wbr-dash-breaker-text">请求有点快，休息冷却中（约 10 分钟后自动恢复，本地屏蔽仍正常生效）</span>
+      <button id="wbr-dash-reset-breaker" type="button" class="wbr-btn wbr-btn-warn">立即恢复</button>
+    </div>
+
+    <div id="wbr-dash-toast" class="wbr-dash-toast hidden" role="status" aria-live="polite"></div>
+
+    <!-- TAB 1: 屏蔽名单 -->
+    <section id="tab-muted" class="wbr-panel active">
+      <div class="wbr-card">
+        <div class="wbr-card-head">
+          <div>
+            <h2>我的屏蔽名单 (<span id="wbr-muted-total">0</span>)</h2>
+            <p class="wbr-hint">在微博首页、转发、评论与群聊中自动生效</p>
+          </div>
+          <div class="wbr-row-gap">
+            <button id="wbr-sync-official" type="button" class="wbr-btn">🔄 同步微博黑名单</button>
+            <button id="wbr-export-muted" type="button" class="wbr-btn">导出名单</button>
+            <label class="wbr-btn wbr-file-btn">
+              导入名单
+              <input id="wbr-import-muted-file" type="file" accept=".json,application/json" hidden />
+            </label>
+          </div>
+        </div>
+
+        <div class="wbr-toolbar-row">
+          <input id="wbr-muted-search" type="search" class="wbr-input" placeholder="搜索昵称或备注..." />
+          <select id="wbr-muted-source-filter" class="wbr-select">
+            <option value="all">全部来源</option>
+            <option value="manual">手动屏蔽</option>
+            <option value="weibo_block">微博黑名单</option>
+            <option value="radar_queue">批量排查</option>
+          </select>
+        </div>
+
+        <div class="wbr-add-bar">
+          <input id="wbr-add-mute-input" type="text" class="wbr-input" placeholder="输入要屏蔽的微博昵称..." />
+          <select id="wbr-add-mute-mode" class="wbr-select">
+            <option value="collapse">收起为一行提示</option>
+            <option value="hide">直接完全隐藏</option>
+          </select>
+          <button id="wbr-add-mute-btn" type="button" class="wbr-btn wbr-btn-primary">添加屏蔽</button>
+        </div>
+
+        <div class="wbr-table-wrap">
+          <table class="wbr-table">
+            <thead>
+              <tr>
+                <th>用户</th>
+                <th>处理方式</th>
+                <th>屏蔽来源</th>
+                <th>备注</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody id="wbr-muted-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: 批量排查与清理 -->
+    <section id="tab-scanner" class="wbr-panel">
+      <div class="wbr-grid-2">
+        <div class="wbr-card">
+          <h3>排查某条微博的评论 / 转发</h3>
+          <p class="wbr-hint">贴入微博链接，帮您逐个看看评论和转发者的关注倾向</p>
+          <input id="wbr-post-url-input" type="text" class="wbr-input" placeholder="贴入微博网页链接（如 https://weibo.com/...）" />
+          <div class="wbr-row-gap wbr-mt8">
+            <button id="wbr-scan-post-btn" type="button" class="wbr-btn wbr-btn-primary">🔍 开始排查</button>
+          </div>
+        </div>
+
+        <div class="wbr-card">
+          <h3>排查最近来评论我的陌生人</h3>
+          <p class="wbr-hint">自动跳过您已关注的人，帮您挑出近期评论区里倾向明显的高风险账号</p>
+          <div class="wbr-row-gap wbr-mt8">
+            <label class="wbr-inline-label">
+              查看最近
+              <input id="wbr-self-posts-limit" type="number" min="1" max="10" value="5" class="wbr-input-sm" />
+              条微博
+            </label>
+            <button id="wbr-scan-self-btn" type="button" class="wbr-btn wbr-btn-primary">🧹 开始排查</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="wbr-card wbr-mt12">
+        <div class="wbr-card-head">
+          <div>
+            <h3>排查结果（倾向由高到低 · 需您手动勾选后再处理）</h3>
+            <div class="wbr-scan-progress-row">
+              <div id="wbr-scan-progress-wrap" class="wbr-progress-bar">
+                <div id="wbr-scan-progress-fill" class="wbr-progress-fill"></div>
+              </div>
+              <span id="wbr-scan-progress-text" class="wbr-hint">就绪</span>
+            </div>
+          </div>
+          <div class="wbr-row-gap">
+            <button id="wbr-stop-scan-btn" type="button" class="wbr-btn hidden">停止排查</button>
+            <button id="wbr-select-high-btn" type="button" class="wbr-btn">一键勾选高倾向</button>
+            <button id="wbr-clear-select-btn" type="button" class="wbr-btn">清空勾选</button>
+          </div>
+        </div>
+
+        <div class="wbr-toolbar-row">
+          <label class="wbr-inline-label">
+            只看至少命中
+            <input id="wbr-min-hit-filter" type="number" min="0" max="50" value="0" class="wbr-input-sm" />
+            位代表号的用户
+          </label>
+          <select id="wbr-cleanup-action-select" class="wbr-select">
+            <option value="mute">仅加入我的屏蔽名单（仅自己眼不见为净）</option>
+            <option value="block">微博官方拉黑并屏蔽</option>
+            <option value="remove_fan">悄悄移除粉丝（仅对自己的粉丝有效）</option>
+          </select>
+          <button id="wbr-exec-cleanup-btn" type="button" class="wbr-btn wbr-btn-danger">处理所选用户</button>
+        </div>
+
+        <div class="wbr-table-wrap">
+          <table class="wbr-table">
+            <thead>
+              <tr>
+                <th><input id="wbr-check-all-rows" type="checkbox" /></th>
+                <th>用户</th>
+                <th>圈层倾向</th>
+                <th>偏向领域</th>
+                <th>关注列表命中</th>
+                <th>评论/互动内容</th>
+                <th>状态</th>
+              </tr>
+            </thead>
+            <tbody id="wbr-scan-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: 偏好与规则 -->
+    <section id="tab-features" class="wbr-panel">
+      <div class="wbr-card">
+        <div class="wbr-card-head">
+          <div>
+            <h2>敏感度与提醒偏好</h2>
+            <p class="wbr-hint">选择最适合您的敏感度档位，一般无需手动修改具体数字</p>
+          </div>
+          <span id="wbr-custom-preset-badge" class="wbr-pill-badge hidden">当前为高级自定义参数</span>
+        </div>
+
+        <div id="wbr-preset-grid" class="wbr-preset-grid">
+          <button type="button" class="wbr-preset-card" data-preset="loose">
+            <div class="wbr-preset-title">宽松</div>
+            <div class="wbr-preset-desc">减少误伤</div>
+          </button>
+          <button type="button" class="wbr-preset-card" data-preset="standard">
+            <div class="wbr-preset-title">标准</div>
+            <div class="wbr-preset-desc">推荐平衡</div>
+          </button>
+          <button type="button" class="wbr-preset-card" data-preset="strict">
+            <div class="wbr-preset-title">严格</div>
+            <div class="wbr-preset-desc">宁严勿宽</div>
+          </button>
+        </div>
+
+        <div class="wbr-pref-list wbr-mt12">
+          <div class="wbr-pref-row">
+            <label for="wbr-cfg-default-mode">屏蔽后的内容怎么显示</label>
+            <select id="wbr-cfg-default-mode" class="wbr-select">
+              <option value="collapse">收起为一行小字（可点开查看）</option>
+              <option value="hide">直接完全隐藏</option>
+            </select>
+          </div>
+          <label class="wbr-pref-check">
+            <input id="wbr-cfg-exempt-followed" type="checkbox" />
+            <span>对我已关注 / 互关的博主默认免除预警标记（推荐开启，防止误伤熟人）</span>
+          </label>
+          <label class="wbr-pref-check">
+            <input id="wbr-cfg-confirm-block" type="checkbox" />
+            <span>主站点击「拉黑」前需要再点一次确认</span>
+          </label>
+          <label class="wbr-pref-check">
+            <input id="wbr-cfg-hover-auto" type="checkbox" />
+            <span>鼠标悬停 🔍 短暂停留后自动查成分</span>
+          </label>
+          <label class="wbr-pref-check">
+            <input id="wbr-cfg-autoscan" type="checkbox" />
+            <span>开启自动连续检测（浏览时自动检测当前屏幕可见陌生账号；关闭时为默认手动按需检测）</span>
+          </label>
+          <label class="wbr-pref-check">
+            <input id="wbr-cfg-cleancheck" type="checkbox" />
+            <span>在所有已检安全用户名旁常驻显示小勾 ✓（默认关闭以保持页面清爽，悬停时仍可查看已查状态）</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="wbr-card wbr-mt12">
+        <h2>关注的圈子领域开关</h2>
+        <p class="wbr-hint">仅统计已开启领域的代表账号</p>
+        <div id="wbr-category-switches" class="wbr-cat-grid wbr-mt8"></div>
+        <div class="wbr-mt12">
+          <button id="wbr-save-prefs-btn" type="button" class="wbr-btn wbr-btn-primary">保存偏好设置</button>
+        </div>
+      </div>
+
+      <div class="wbr-card wbr-mt12">
+        <h2>算法防误伤与权限透明说明</h2>
+        <ul class="wbr-info-list wbr-mt8">
+          <li><strong>单人权重远低于预警阈值，偶有关注不会误伤：</strong>插件采用「去热门权重校准 + 饱和阻尼」机制，单个参考博主（尤其是高粉丝热门大众号）权重远低于预警线（标准档轻度线 3.1 分、高匹配线 4.7 分），仅关注一两位不会触发标警；同时默认豁免您本人、已关注/互关博主、官方蓝V机构号及与您共同关注的账号，保持规则简洁稳健。</li>
+          <li><strong>权限最小化（零 <code>cookies</code> 权限 · 100% 本地）：</strong>仅申请 <code>storage</code> 单一权限与微博官网同源访问，不读取跨站 Cookie、无任何远程后端服务器或埋点统计，全部配置与 7 天查询缓存仅存本地浏览器。开源代码与隐私声明：<a href="https://github.com/valid-studio/weibo-follow-law" target="_blank" rel="noopener noreferrer">github.com/valid-studio/weibo-follow-law</a></li>
+        </ul>
+      </div>
+
+      <details class="wbr-advanced-box wbr-mt12">
+        <summary>高级设置与自定义名单（一般无需调整）</summary>
+        <div class="wbr-advanced-body">
+          <div class="wbr-adv-section">
+            <h3>识别参数微调</h3>
+            <div class="wbr-grid-4 wbr-mt8">
+              <label class="wbr-field">
+                <span>轻度提醒加权分（标准 3.1）</span>
+                <input id="wbr-cfg-warn" type="number" min="0.5" max="20" step="0.1" class="wbr-input" />
+              </label>
+              <label class="wbr-field">
+                <span>高匹配预警加权分（标准 4.7）</span>
+                <input id="wbr-cfg-high" type="number" min="0.5" max="30" step="0.1" class="wbr-input" />
+              </label>
+              <label class="wbr-field">
+                <span>每次最多查看TA的关注数</span>
+                <select id="wbr-cfg-scan-pages" class="wbr-select">
+                  <option value="3">极速浅层（约前 60 位关注）</option>
+                  <option value="5">快速中浅层（约前 100 位关注）</option>
+                  <option value="6">宽松中层（约前 120 位关注）</option>
+                  <option value="7">宽松中深层（约前 140 位关注）</option>
+                  <option value="9">标准全窗（约前 180 位关注 · 推荐）</option>
+                  <option value="10">极限满窗（约前 200 位关注 · 接口上限）</option>
+                </select>
+              </label>
+              <label class="wbr-field">
+                <span>查询记录保留天数</span>
+                <input id="wbr-cfg-cache-days" type="number" min="1" max="30" class="wbr-input" />
+              </label>
+            </div>
+            <div class="wbr-mt8">
+              <button id="wbr-save-adv-btn" type="button" class="wbr-btn wbr-btn-primary">应用高级参数</button>
+            </div>
+          </div>
+
+          <div class="wbr-adv-section">
+            <h3>不计入统计的常见大众博主</h3>
+            <p class="wbr-hint">被很多人共同关注的热门官媒或科普博主，加入后不参与定律匹配计分</p>
+            <div class="wbr-add-bar wbr-mt8">
+              <input id="wbr-wl-input" type="text" class="wbr-input" placeholder="输入不想计入统计的博主昵称..." />
+              <button id="wbr-wl-add-btn" type="button" class="wbr-btn">加入跳过列表</button>
+            </div>
+            <div id="wbr-wl-chips" class="wbr-chips-wrap"></div>
+          </div>
+
+          <div class="wbr-adv-section">
+            <h3>自定义参考博主名单</h3>
+            <p class="wbr-hint">内置常用参考博主开关，也可自行添加</p>
+            <div class="wbr-add-bar wbr-mt8">
+              <input id="wbr-feat-name" type="text" class="wbr-input" placeholder="博主昵称（如 某账号）" />
+              <input id="wbr-feat-aliases" type="text" class="wbr-input" placeholder="曾用名或别名（逗号分隔，选填）" />
+              <select id="wbr-feat-cat" class="wbr-select"></select>
+              <button id="wbr-feat-add-btn" type="button" class="wbr-btn">添加参考博主</button>
+            </div>
+            <div id="wbr-feature-matrix-list" class="wbr-matrix-list wbr-mt8"></div>
+          </div>
+
+          <div class="wbr-adv-section">
+            <h3>备份与缓存维护</h3>
+            <div class="wbr-row-gap wbr-mt8">
+              <button id="wbr-export-all-btn" type="button" class="wbr-btn">导出全部配置</button>
+              <label class="wbr-btn wbr-file-btn">
+                导入配置
+                <input id="wbr-import-all-file" type="file" accept=".json,application/json" hidden />
+              </label>
+              <button id="wbr-clear-cache-btn" type="button" class="wbr-btn">清空已查记录缓存</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+  </div>
+  <script src="shared/radar_engine.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

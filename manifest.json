@@ -1,0 +1,85 @@
+{
+  "manifest_version": 3,
+  "name": "微博关注列表定律",
+  "short_name": "关注列表定律",
+  "version": "1.5.3",
+  "homepage_url": "https://github.com/valid-studio/weibo-follow-law",
+  "minimum_chrome_version": "111",
+  "description": "基于关注列表定律的微博成分辅助识别与降噪工具：提示高匹配倾向账号、支持本地一键屏蔽折叠与黑名单管理，让微博主站与群聊浏览更清净。",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://weibo.com/*",
+    "https://api.weibo.com/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "微博关注列表定律",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://weibo.com/*"
+      ],
+      "js": [
+        "main_bridge_weibo.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://weibo.com/*"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "js": [
+        "shared/radar_engine.js",
+        "content_weibo.js"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "https://api.weibo.com/chat*",
+        "https://api.weibo.com/webim/*"
+      ],
+      "js": [
+        "main_bridge_chat.js"
+      ],
+      "world": "MAIN",
+      "run_at": "document_start"
+    },
+    {
+      "matches": [
+        "https://api.weibo.com/chat*",
+        "https://api.weibo.com/webim/*"
+      ],
+      "css": [
+        "content.css"
+      ],
+      "js": [
+        "shared/radar_engine.js",
+        "content_chat.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ]
+}

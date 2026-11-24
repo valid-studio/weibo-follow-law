@@ -1,0 +1,264 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  width: 320px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: #f8fafc;
+  color: #0f172a;
+  font-size: 13px;
+}
+
+.wbr-pop-app {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wbr-pop-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wbr-pop-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+
+.wbr-pop-title-col {
+  min-width: 0;
+}
+
+.wbr-pop-brand img {
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.wbr-pop-brand h1 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.wbr-pop-sub {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wbr-switch {
+  position: relative;
+  display: inline-block;
+  width: 40px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+.wbr-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.wbr-slider {
+  position: absolute;
+  inset: 0;
+  background: #cbd5e1;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.wbr-slider::before {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #ffffff;
+  transition: transform 0.2s;
+}
+
+.wbr-switch input:checked + .wbr-slider {
+  background: #2563eb;
+}
+
+.wbr-switch input:checked + .wbr-slider::before {
+  transform: translateX(18px);
+}
+
+.wbr-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  border-radius: 10px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #9a3412;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.wbr-alert-text {
+  flex: 1;
+  word-break: break-word;
+}
+
+.wbr-btn-warn-xs {
+  padding: 4px 9px;
+  font-size: 11px;
+  background: #ea580c;
+  border-color: #ea580c;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+.wbr-btn-warn-xs:hover {
+  background: #c2410c;
+}
+
+.hidden {
+  display: none !important;
+}
+
+.wbr-mode-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.wbr-mode-seg {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  background: #f1f5f9;
+  padding: 3px;
+  border-radius: 8px;
+}
+
+.wbr-mode-btn {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.wbr-mode-btn:hover {
+  color: #0f172a;
+}
+
+.wbr-mode-btn.is-active {
+  background: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+.wbr-mode-desc {
+  font-size: 11px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
+.wbr-pop-primary {
+  display: flex;
+}
+
+.wbr-toggle-list {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 2px 11px;
+  display: flex;
+  flex-direction: column;
+}
+
+.wbr-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+}
+
+.wbr-pop-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.wbr-btn {
+  width: 100%;
+  padding: 9px 12px;
+  border-radius: 9px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1e293b;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.wbr-btn-secondary {
+  width: auto;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.wbr-btn-grow {
+  flex: 1;
+}
+
+.wbr-btn:hover {
+  background: #f1f5f9;
+}
+
+.wbr-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.wbr-btn-primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}
+
+.wbr-btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.wbr-pop-footer {
+  font-size: 11px;
+  color: #94a3b8;
+  text-align: center;
+}
