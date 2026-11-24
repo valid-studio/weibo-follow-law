@@ -34,7 +34,6 @@
     currentState = Engine.normalizeState(st);
     const isEnabled = Boolean(currentState.enabled && currentState.enableMainSite);
     document.getElementById("wbr-opt-enabled").checked = isEnabled;
-    document.getElementById("wbr-opt-chatsync").checked = currentState.enableChatSync;
 
     const manualBtn = document.getElementById("wbr-mode-manual");
     const autoBtn = document.getElementById("wbr-mode-auto");
@@ -153,9 +152,6 @@
     document.getElementById("wbr-opt-enabled").addEventListener("change", (e) => {
       const checked = Boolean(e.target.checked);
       persistPatch({ enabled: checked, enableMainSite: checked });
-    });
-    document.getElementById("wbr-opt-chatsync").addEventListener("change", (e) => {
-      persistPatch({ enableChatSync: e.target.checked });
     });
 
     document.getElementById("wbr-mode-manual").addEventListener("click", () => {

@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.4] - 2026-11-24
+### Changed & Removed
+- **权限与功能进一步收敛**：移除网页群聊（`api.weibo.com/chat` / `api.weibo.com/webim/*`）相关功能、注入脚本（`main_bridge_chat.js`、`content_chat.js`）及域名权限，将 `host_permissions` 收敛为单一微博主站域名 `["https://weibo.com/*"]`。
+- **界面与配置精简**：移除 Popup 弹窗中的群聊同步折叠开关及残余聊天样式，保持旧版导出配置导入时的静默向后兼容。
+- **理论溯源与文档完善**：在 `README.md` 与 `docs/METHODOLOGY.md` 补充「关注列表定律」理论出处说明与 `@tombkeeper` 原博合辑链接（`https://weibo.com/1401527553/Ra8WyguDC`），同步更新 `PRIVACY.md` 与 `SECURITY.md`。
+
 ## [1.5.3] - 2026-11-24
 ### Changed & Security
 - **最小权限减敏**：从 `manifest.json` 彻底移除 `cookies` 权限，仅保留单一 `["storage"]` 权限；将 `XSRF-TOKEN` 与登录账号 UID 识别平滑迁移至页面 `MAIN` 世界上下文及微博同源接口。

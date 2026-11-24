@@ -779,58 +779,6 @@
   font-size: 11px;
 }
 
-/* Chat lightweight integration */
-.wbr-chat-mute-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: 5px;
-  padding: 0 7px;
-  height: 18px;
-  font-size: 11px;
-  line-height: 16px;
-  border-radius: 999px;
-  border: none;
-  background: rgba(148, 163, 184, 0.16);
-  color: #64748b;
-  cursor: pointer;
-  vertical-align: middle;
-  white-space: nowrap;
-  flex-shrink: 0;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.15s ease, color 0.15s ease, background-color 0.15s ease;
-}
-
-li:hover .wbr-chat-mute-btn,
-.message-item:hover .wbr-chat-mute-btn,
-.wbr-chat-mute-btn:focus-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.wbr-chat-mute-btn:hover {
-  color: #dc2626;
-  background: #fef2f2;
-}
-
-.wbr-chat-muted-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  box-sizing: border-box;
-  width: calc(100% - 24px);
-  max-width: 100%;
-  padding: 5px 10px;
-  margin: 4px 12px;
-  border-radius: 8px;
-  background: rgba(148, 163, 184, 0.1);
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  color: #94a3b8;
-  font-size: 11px;
-}
-
 .wbr-toast {
   position: fixed;
   left: 50%;

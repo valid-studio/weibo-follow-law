@@ -187,7 +187,7 @@ if (typeof importScripts === "function") {
       if (tabsApi && tabsApi.query) {
         try {
           const tabs = await tabsApi.query({
-            url: ["https://weibo.com/*", "https://api.weibo.com/*"]
+            url: ["https://weibo.com/*"]
           });
           for (const t of tabs) {
             if (!t || !t.id) continue;

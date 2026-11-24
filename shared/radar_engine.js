@@ -20,8 +20,8 @@
   const DB_NAME = "wbr_radar_cache_db";
   const DB_VERSION = 3;
   const DB_STORE = "radar_results";
-  const ALGO_VERSION = "1.5.3";
-  const COMPATIBLE_ALGO_VERSIONS = new Set(["1.3.0", "1.3.1", "1.4.0", "1.4.1", "1.5.0", "1.5.1", "1.5.2", "1.5.3"]);
+  const ALGO_VERSION = "1.5.4";
+  const COMPATIBLE_ALGO_VERSIONS = new Set(["1.3.0", "1.3.1", "1.4.0", "1.4.1", "1.5.0", "1.5.1", "1.5.2", "1.5.3", "1.5.4"]);
   const MODEL_SCHEMA_VERSION = 3;
   const UX_MODE_VERSION = 2;
 
@@ -212,7 +212,6 @@
       uxModeVersion: UX_MODE_VERSION,
       enabled: true,
       enableMainSite: true,
-      enableChatSync: true,
       autoScanViewport: false,
       showCleanCheckmark: false,
       progressPillCollapsed: false,
@@ -313,7 +312,6 @@
     base.uxModeVersion = UX_MODE_VERSION;
     base.enabled = src.enabled !== false;
     base.enableMainSite = src.enableMainSite !== false;
-    base.enableChatSync = src.enableChatSync !== false;
     base.autoScanViewport = isLegacyUxMode ? false : Boolean(src.autoScanViewport);
     base.showCleanCheckmark = isLegacyUxMode ? false : Boolean(src.showCleanCheckmark);
     base.progressPillCollapsed = Boolean(src.progressPillCollapsed);
