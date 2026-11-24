@@ -1682,6 +1682,14 @@ if (typeof importScripts === "function") {
             batchStopRequested = true;
             return { ok: true };
           }
+          case "WBR_OPEN_DASHBOARD": {
+            const hash = msg.hash ? `#${String(msg.hash).replace(/^#/, "")}` : "";
+            if (tabsApi && tabsApi.create && runtimeApi && runtimeApi.getURL) {
+              await tabsApi.create({ url: runtimeApi.getURL(`dashboard.html${hash}`) });
+              return { ok: true };
+            }
+            return { ok: false, error: "Tabs API unavailable" };
+          }
           default:
             return { ok: false, error: `Unknown message type: ${msg.type}` };
         }

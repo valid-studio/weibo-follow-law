@@ -32,7 +32,7 @@
         <button id="wbr-mode-manual" type="button" role="tab" class="wbr-mode-btn is-active" data-mode="manual" aria-selected="true">👆 手动按需</button>
         <button id="wbr-mode-auto" type="button" role="tab" class="wbr-mode-btn" data-mode="auto" aria-selected="false">⚡ 自动检测</button>
       </div>
-      <div id="wbr-mode-desc" class="wbr-mode-desc">默认省流零打扰：鼠标悬停用户名点「查成分」，或点击下方按钮按需扫描</div>
+      <div id="wbr-mode-desc" class="wbr-mode-desc">悬停用户名按需查成分，或点击下方按钮扫描</div>
     </section>
 
     <section class="wbr-pop-primary">
@@ -41,18 +41,19 @@
 
     <section class="wbr-toggle-list">
       <label class="wbr-toggle-row">
-        <span>在微博群聊中同步折叠已屏蔽用户</span>
+        <span>群聊中同步折叠已屏蔽用户</span>
         <input id="wbr-opt-chatsync" type="checkbox" />
       </label>
     </section>
 
     <section class="wbr-pop-bottom-row">
-      <button id="wbr-btn-dashboard" type="button" class="wbr-btn wbr-btn-secondary wbr-btn-grow">屏蔽名单 (0) 与规则设置</button>
+      <button id="wbr-btn-dashboard" type="button" class="wbr-btn wbr-btn-secondary wbr-btn-grow">屏蔽名单 (0) · 设置</button>
       <button id="wbr-btn-sync-blocklist" type="button" class="wbr-btn wbr-btn-secondary">同步黑名单</button>
     </section>
 
-    <footer id="wbr-pop-status" class="wbr-pop-footer">
-      100% 本地运行 · 零 cookies 权限 · 数据不离开浏览器
+    <footer class="wbr-pop-footer">
+      <span id="wbr-pop-status">v1.5.3 · 开源本地版</span>
+      <a class="wbr-pop-link" href="https://github.com/valid-studio/weibo-follow-law" target="_blank" rel="noopener noreferrer">GitHub</a>
     </footer>
   </div>
   <script src="shared/radar_engine.js"></script>

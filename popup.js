@@ -48,13 +48,13 @@
     }
     if (modeDesc) {
       modeDesc.textContent = isAuto
-        ? "浏览时自动快检当前屏幕内的陌生账号，仅对高倾向账号挂标提醒"
-        : "默认省流零打扰：鼠标悬停用户名点「查成分」，或点击下方按钮按需扫描";
+        ? "浏览时自动快检可见陌生账号，仅高倾向挂标"
+        : "悬停用户名按需查成分，或点击下方按钮扫描";
     }
 
     const dashBtn = document.getElementById("wbr-btn-dashboard");
     if (dashBtn) {
-      dashBtn.textContent = `屏蔽名单 (${currentState.mutedUsers.length}) 与规则设置`;
+      dashBtn.textContent = `屏蔽名单 (${currentState.mutedUsers.length}) · 设置`;
     }
 
     const scanBtn = document.getElementById("wbr-btn-scan-page");
@@ -66,9 +66,9 @@
     if (!isEnabled) {
       accLine.textContent = "已暂停保护";
     } else if (currentState.account && (currentState.account.screenName || currentState.account.uid)) {
-      accLine.textContent = `已登录 @${currentState.account.screenName || "微博用户"} · 纯本地运行`;
+      accLine.textContent = `已登录 @${currentState.account.screenName || "微博用户"}`;
     } else {
-      accLine.textContent = "纯本地运行 · 待登录微博";
+      accLine.textContent = "未登录微博网页版";
     }
 
     const alertBox = document.getElementById("wbr-breaker-alert");

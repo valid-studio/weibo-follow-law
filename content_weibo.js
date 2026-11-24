@@ -780,16 +780,31 @@
       title.className = "wbr-popover-title";
       title.textContent = `微博关注列表定律 · @${targetUser.screenName || "用户"}`;
       headLeft.appendChild(title);
+      const headActions = doc.createElement("div");
+      headActions.className = "wbr-popover-head-actions";
+      const helpBtn = doc.createElement("button");
+      helpBtn.type = "button";
+      helpBtn.className = "wbr-popover-help";
+      helpBtn.textContent = "?";
+      helpBtn.title = "规则与防误伤说明：单人权重低于预警线（标准 3.1 分），点击打开设置页";
+      helpBtn.setAttribute("aria-label", "规则与设置");
+      helpBtn.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        ev.preventDefault();
+        sendMessage({ type: "WBR_OPEN_DASHBOARD", hash: "features" });
+      });
       const closeBtn = doc.createElement("button");
       closeBtn.type = "button";
       closeBtn.className = "wbr-popover-close";
       closeBtn.textContent = "×";
+      closeBtn.setAttribute("aria-label", "关闭");
       closeBtn.addEventListener("click", (ev) => {
         ev.stopPropagation();
         ev.preventDefault();
         closePopover();
       });
-      head.append(headLeft, closeBtn);
+      headActions.append(helpBtn, closeBtn);
+      head.append(headLeft, headActions);
       pop.appendChild(head);
       pop.addEventListener("click", (ev) => ev.stopPropagation());
       doc.body.appendChild(pop);
@@ -863,8 +878,8 @@
       body.textContent = errorText
         ? errorText
         : (isVisitorLoading
-          ? `正在以访客视角测算 @${targetUser.screenName || "您"} 的近期关注...`
-          : `正在查看 @${targetUser.screenName || "这位用户"} 的近期关注...`);
+          ? `正在测算 @${targetUser.screenName || "您"} 的近期关注...`
+          : `正在查看 @${targetUser.screenName || "用户"} 的近期关注...`);
       pop.appendChild(body);
       if (errorText) {
         const footer = doc.createElement("div");
@@ -914,42 +929,42 @@
       summary.className = "wbr-popover-summary";
       const topCats = getTopCategoryShorts(data.categoryCounts, 2);
       if (data._isSelfPlaceholder) {
-        summary.textContent = `属于「${data.selfCategoryFull || data.selfCategoryLabel}」高辨识度特征源账号`;
+        summary.textContent = `属于「${data.selfCategoryFull || data.selfCategoryLabel}」特征源账号`;
       } else if (data._isMutedPlaceholder) {
-        summary.textContent = `已在您的屏蔽名单中（${data.mutedReason || "手动屏蔽"}）`;
+        summary.textContent = `已在屏蔽名单中（${data.mutedReason || "手动屏蔽"}）`;
       } else if (isVisitorSim) {
         if (data.hiddenFollowing) {
-          summary.textContent = "您设置了关注列表不可见，访客视角暂时看不了";
+          summary.textContent = "关注列表不可见，访客视角无法查看";
         } else if (!data.hitCount || data.hitCount <= 0) {
-          summary.textContent = "访客视角：最近公开关注中未发现明显特征重合";
+          summary.textContent = "访客视角：近期公开关注无明显特征重合";
         } else if (data.level !== "warn" && data.level !== "high") {
           const prob = data.probability || Engine.computeProbabilityFromScore(data.score ?? data.hitCount, data.hitCount);
-          summary.textContent = `访客视角：未达定律预警线（重合 ${data.hitCount} 位泛圈层/股评/大众号，得分 ${data.score ?? 0}，匹配度 ${prob}%）`;
+          summary.textContent = `访客视角：未达预警线（重合 ${data.hitCount} 位 · 得分 ${data.score ?? 0} · 匹配度 ${prob}%）`;
         } else {
           const catText = topCats.length > 0 ? topCats.map((c) => `「${c}」`).join("") : "特定圈层";
           const prob = data.probability || Engine.computeProbabilityFromScore(data.score ?? data.hitCount, data.hitCount);
           summary.textContent = data.level === "warn"
-            ? `访客视角：存在关注倾向 · 匹配度 ${prob}%（命中 ${data.hitCount} 位，偏${catText}）`
-            : `访客视角：高度符合关注列表定律 · 匹配度 ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
+            ? `访客视角：存在关注倾向 · ${prob}%（命中 ${data.hitCount} 位，偏${catText}）`
+            : `访客视角：高度符合定律 · ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
         }
       } else if (data.exemptReason === "self") {
-        summary.textContent = "您本人的微博账号（默认免除定律预警）";
+        summary.textContent = "本人账号 · 默认免预警";
       } else if (data.exemptReason === "following") {
-        summary.textContent = `您已关注的账号 · 默认免除预警标记${data.hitCount > 0 ? `（公开关注重合 ${data.hitCount} 位）` : ""}`;
+        summary.textContent = `已关注账号 · 默认免预警${data.hitCount > 0 ? `（重合 ${data.hitCount} 位）` : ""}`;
       } else if (data.exemptReason === "org_verified") {
-        summary.textContent = `官方/媒体蓝V认证机构号 · 不适用个人定律预警${data.hitCount > 0 ? `（重合 ${data.hitCount} 位）` : ""}`;
+        summary.textContent = `官方蓝V机构号 · 免预警${data.hitCount > 0 ? `（重合 ${data.hitCount} 位）` : ""}`;
       } else if (data.hiddenFollowing) {
-        summary.textContent = "对方隐藏了关注列表，暂时看不了";
+        summary.textContent = "对方隐藏了关注列表";
       } else if (!data.hitCount || data.hitCount <= 0) {
-        summary.textContent = "在最近公开关注中未发现明显特征重合";
+        summary.textContent = "近期公开关注无明显特征重合";
       } else if (data.level !== "warn" && data.level !== "high") {
-        summary.textContent = `未达定律预警线（仅重合 ${data.hitCount} 位泛圈层/股评/大众号，得分 ${data.score ?? 0}）`;
+        summary.textContent = `未达预警线（重合 ${data.hitCount} 位 · 得分 ${data.score ?? 0}）`;
       } else {
         const catText = topCats.length > 0 ? topCats.map((c) => `「${c}」`).join("") : "特定圈层";
         const prob = data.probability || Engine.computeProbabilityFromScore(data.score ?? data.hitCount, data.hitCount);
         summary.textContent = data.level === "warn"
-          ? `存在关注倾向 · 匹配度 ${prob}%（命中 ${data.hitCount} 位，偏${catText}）`
-          : `高度符合关注列表定律 · 匹配度 ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
+          ? `存在关注倾向 · ${prob}%（命中 ${data.hitCount} 位，偏${catText}）`
+          : `高度符合定律 · ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
       }
       pop.appendChild(summary);
 
@@ -960,33 +975,19 @@
         const friends = Engine.formatCompactCount(data.friendsCount);
         const scoreText = data.score !== undefined ? data.score : (data.hitCount || 0);
         if (isVisitorSim) {
-          meta.textContent = `粉丝 ${followers} · 总关注 ${friends}（访客视角已检最近 ${data.scannedCount || 0} 位 · 真实加权得分 ${scoreText}）`;
+          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 已检 ${data.scannedCount || 0} 位 · 真实得分 ${scoreText}（仅自测参考）`;
         } else if (data.exemptReason === "self") {
           meta.textContent = data.fastSkippedExempt
-            ? `粉丝 ${followers} · 总关注 ${friends}（本人免预警保护 · 未计分）`
-            : `粉丝 ${followers} · 总关注 ${friends}（已检最近 ${data.scannedCount || 0} 位 · 本人免计分 0）`;
+            ? `粉丝 ${followers} · 关注 ${friends} · 共同关注免计分`
+            : `粉丝 ${followers} · 关注 ${friends} · 已检 ${data.scannedCount || 0} 位（免计分）`;
         } else if (data.fastSkippedExempt) {
-          meta.textContent = `粉丝 ${followers} · 总关注 ${friends}（已按免误伤规则快速豁免 · 未拉取关注页）`;
+          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 已快速豁免`;
         } else if (data.scanMode === "fast_clean" || data.scanMode === "fast_high") {
-          meta.textContent = `粉丝 ${followers} · 总关注 ${friends}（已快筛最近 ${data.scannedCount || 0} 位 · 加权得分 ${scoreText}）`;
+          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 快筛 ${data.scannedCount || 0} 位 · 得分 ${scoreText}`;
         } else {
-          meta.textContent = `粉丝 ${followers} · 总关注 ${friends}（已检最近 ${data.scannedCount || 0} 位 · 加权得分 ${scoreText}）`;
+          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 已检 ${data.scannedCount || 0} 位 · 得分 ${scoreText}`;
         }
         pop.appendChild(meta);
-      }
-
-      if (data.exemptReason === "self" || isVisitorSim) {
-        const tipBox = doc.createElement("div");
-        tipBox.className = isVisitorSim ? "wbr-popover-tip is-visitor" : "wbr-popover-tip";
-        tipBox.textContent = isVisitorSim
-          ? "以上为模拟陌生访客视角的实时测算结果（未应用本人免计分保护），仅供自检参考，不会在主站对您本人标警或触发屏蔽/拉黑。"
-          : "为防误伤且省流，插件默认对本人免除预警且与自己「共同关注」的账号均免计分（因此显示 0 分）。点下方「模拟访客自测」可按路人视角计算真实得分。";
-        pop.appendChild(tipBox);
-      } else if (!data._isSelfPlaceholder && !data._isMutedPlaceholder) {
-        const algoNote = doc.createElement("div");
-        algoNote.className = "wbr-popover-algo-note";
-        algoNote.textContent = "说明：单个热门/大众博主权重远低于预警线（标准 3.1 分），偶有关注不会误伤；100% 本地运行，零 cookies 权限。";
-        pop.appendChild(algoNote);
       }
 
       const catCounts = data.categoryCounts || {};
@@ -1032,7 +1033,7 @@
         const visitorBtn = doc.createElement("button");
         visitorBtn.type = "button";
         visitorBtn.className = isVisitorSim ? "wbr-act-btn" : "wbr-act-btn wbr-act-btn-primary";
-        const visitorBtnLabel = isVisitorSim ? "🔄 重新自测" : "🧪 模拟访客自测（查看真实得分）";
+        const visitorBtnLabel = isVisitorSim ? "🔄 重新自测" : "🧪 模拟访客自测";
         visitorBtn.textContent = visitorBtnLabel;
         visitorBtn.addEventListener("click", async (ev) => {
           ev.stopPropagation();
@@ -1090,8 +1091,8 @@
         const isFastExempt = Boolean(!isPlaceholder && data.fastSkippedExempt);
         const isFastMode = Boolean(!isPlaceholder && !isFastExempt && (data.scanMode === "fast_clean" || data.scanMode === "fast_high"));
         const recheckLabel = isPlaceholder
-          ? "🔍 查看TA的最近关注"
-          : (isFastExempt ? "🔍 深查TA的关注列表重合明细" : (isFastMode ? "🔄 查全量关注" : "重新查一下"));
+          ? "🔍 查近期关注"
+          : (isFastExempt ? "🔍 深查明细" : (isFastMode ? "🔄 查全量" : "重新查询"));
         const recheckOpts = isFastExempt
           ? { forceDeepScan: true, fullScan: true }
           : (isFastMode ? { fullScan: true } : {});
@@ -1124,7 +1125,7 @@
         const muteBtn = doc.createElement("button");
         muteBtn.type = "button";
         muteBtn.className = "wbr-act-btn";
-        muteBtn.textContent = alreadyMuted ? "取消屏蔽" : "不看TA（屏蔽）";
+        muteBtn.textContent = alreadyMuted ? "取消屏蔽" : "屏蔽";
         muteBtn.addEventListener("click", async (ev) => {
           ev.stopPropagation();
           ev.preventDefault();
@@ -3340,7 +3341,7 @@
       }
       btn.className = "wbr-usercard-btn";
       btn.textContent = "🔍 查成分";
-      btn.title = "按需查看 TA 的近期关注列表倾向（零自动请求）";
+      btn.title = "查看近期关注倾向";
     }
 
     function processOfficialUserCards(collectedUids) {

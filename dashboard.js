@@ -71,7 +71,7 @@
     if (state.account && (state.account.screenName || state.account.uid)) {
       accEl.textContent = `已登录 @${state.account.screenName || "微博用户"}`;
     } else {
-      accEl.textContent = "请先登录微博网页版（本地屏蔽仍可正常使用）";
+      accEl.textContent = "未登录微博网页版（本地屏蔽仍正常生效）";
     }
 
     const brEl = document.getElementById("wbr-dash-breaker");
@@ -402,14 +402,24 @@
 
   function bindTabs() {
     const tabs = document.querySelectorAll(".wbr-tab");
+    const activateTab = (tabName) => {
+      const target = document.getElementById(`tab-${tabName}`);
+      if (!target) return;
+      for (const t of tabs) {
+        t.classList.toggle("active", t.dataset.tab === tabName);
+      }
+      for (const p of document.querySelectorAll(".wbr-panel")) {
+        p.classList.toggle("active", p === target);
+      }
+    };
     for (const btn of tabs) {
       btn.addEventListener("click", () => {
-        for (const t of tabs) t.classList.remove("active");
-        for (const p of document.querySelectorAll(".wbr-panel")) p.classList.remove("active");
-        btn.classList.add("active");
-        const target = document.getElementById(`tab-${btn.dataset.tab}`);
-        if (target) target.classList.add("active");
+        activateTab(btn.dataset.tab);
       });
+    }
+    const initialHash = (window.location.hash || "").replace(/^#/, "");
+    if (initialHash) {
+      activateTab(initialHash);
     }
   }
 

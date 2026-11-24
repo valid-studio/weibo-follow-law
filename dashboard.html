@@ -197,23 +197,23 @@
           </div>
           <label class="wbr-pref-check">
             <input id="wbr-cfg-exempt-followed" type="checkbox" />
-            <span>对我已关注 / 互关的博主默认免除预警标记（推荐开启，防止误伤熟人）</span>
+            <span>已关注 / 互关博主默认免预警</span>
           </label>
           <label class="wbr-pref-check">
             <input id="wbr-cfg-confirm-block" type="checkbox" />
-            <span>主站点击「拉黑」前需要再点一次确认</span>
+            <span>点击「官方拉黑」前二次确认</span>
           </label>
           <label class="wbr-pref-check">
             <input id="wbr-cfg-hover-auto" type="checkbox" />
-            <span>鼠标悬停 🔍 短暂停留后自动查成分</span>
+            <span>悬停「查成分」短暂停留后自动检测</span>
           </label>
           <label class="wbr-pref-check">
             <input id="wbr-cfg-autoscan" type="checkbox" />
-            <span>开启自动连续检测（浏览时自动检测当前屏幕可见陌生账号；关闭时为默认手动按需检测）</span>
+            <span>自动检测屏幕内陌生账号（关闭则仅手动按需检测）</span>
           </label>
           <label class="wbr-pref-check">
             <input id="wbr-cfg-cleancheck" type="checkbox" />
-            <span>在所有已检安全用户名旁常驻显示小勾 ✓（默认关闭以保持页面清爽，悬停时仍可查看已查状态）</span>
+            <span>已检安全账号旁常驻显示 ✓ 标记</span>
           </label>
         </div>
       </div>
@@ -227,13 +227,13 @@
         </div>
       </div>
 
-      <div class="wbr-card wbr-mt12">
-        <h2>算法防误伤与权限透明说明</h2>
+      <details class="wbr-advanced-box wbr-mt12">
+        <summary>规则原理与开源说明</summary>
         <ul class="wbr-info-list wbr-mt8">
-          <li><strong>单人权重远低于预警阈值，偶有关注不会误伤：</strong>插件采用「去热门权重校准 + 饱和阻尼」机制，单个参考博主（尤其是高粉丝热门大众号）权重远低于预警线（标准档轻度线 3.1 分、高匹配线 4.7 分），仅关注一两位不会触发标警；同时默认豁免您本人、已关注/互关博主、官方蓝V机构号及与您共同关注的账号，保持规则简洁稳健。</li>
-          <li><strong>权限最小化（零 <code>cookies</code> 权限 · 100% 本地）：</strong>仅申请 <code>storage</code> 单一权限与微博官网同源访问，不读取跨站 Cookie、无任何远程后端服务器或埋点统计，全部配置与 7 天查询缓存仅存本地浏览器。开源代码与隐私声明：<a href="https://github.com/valid-studio/weibo-follow-law" target="_blank" rel="noopener noreferrer">github.com/valid-studio/weibo-follow-law</a></li>
+          <li><strong>防误伤计分：</strong>去热门校准 + 饱和阻尼，单人权重低于预警线（标准 3.1 分），偶有关注不触发标警；默认豁免本人、已关注、蓝V机构号及共同关注。</li>
+          <li><strong>隐私与开源：</strong>仅申请 <code>storage</code> 权限，配置与 7 天查询缓存仅存本地 · <a href="https://github.com/valid-studio/weibo-follow-law" target="_blank" rel="noopener noreferrer">GitHub 开源仓库</a></li>
         </ul>
-      </div>
+      </details>
 
       <details class="wbr-advanced-box wbr-mt12">
         <summary>高级设置与自定义名单（一般无需调整）</summary>

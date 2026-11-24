@@ -258,7 +258,22 @@ body {
 }
 
 .wbr-pop-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 11px;
   color: #94a3b8;
-  text-align: center;
+  padding-top: 2px;
+}
+
+.wbr-pop-link {
+  color: #64748b;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+
+.wbr-pop-link:hover {
+  color: #2563eb;
+  text-decoration: underline;
 }
