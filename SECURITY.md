@@ -5,14 +5,14 @@
 「微博关注列表定律 (Weibo Follow Law)」遵循最小权限与零外传架构：
 - **零外部网络通信**：所有计算、缓存与 UI 渲染均在用户浏览器本地完成，除微博官网同源接口（`https://weibo.com`）外，不向任何第三方域名发起网络请求。
 - **最小权限模型**：`manifest.json` 仅申请 `["storage"]` 单一扩展权限，不使用 `cookies`、`tabs`、`webRequest`、`scripting` 或 `<all_urls>` 权限，亦不加载任何远程代码（Remote Code）。
-- **XSS 与 DOM 注入安全**：内容脚本与管理面板坚持使用安全的 DOM API（`textContent` / `createElement` / `replaceChildren`）构建界面，拒绝将外部接口返回字段直接拼入 `innerHTML`。
+- **XSS 与 DOM 注入安全**：内容脚本与管理面板坚持使用安全的 DOM API（`textContent` / `createElement` / `createElementNS` / `replaceChildren`）构建界面与内联 SVG 图标，拒绝将外部接口返回字段直接拼入 `innerHTML`。
 - **请求限流与风控熔断**：全部网络接口调用均内置并发串行队列、超时控制与风控冷却熔断机制，绝不在后台静默高频刷取接口。
 
 ## 支持版本
 
 | 版本 | 是否接收安全修复 |
 | --- | --- |
-| `1.5.x`（当前最新 `1.5.4`） | ✅ 支持 |
+| `1.5.x`（当前最新 `1.5.5`） | ✅ 支持 |
 | `< 1.5.0` | ❌ 请升级至最新 `1.5.x` 版本 |
 
 ## 漏洞报告渠道 (Reporting a Vulnerability)

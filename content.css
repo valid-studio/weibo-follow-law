@@ -1,5 +1,17 @@
 /* Weibo Radar & Noise Reduction Helper (wbr-* strictly isolated namespace) */
 
+.wbr-ico {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vertical-align: -0.12em;
+}
+
 .wbr-badge {
   display: inline-flex;
   align-items: center;
@@ -332,11 +344,12 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 20px;
-  padding: 0 7px;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px;
   box-sizing: border-box;
   font-size: 11px;
-  line-height: 18px;
+  line-height: 20px;
   border-radius: 999px;
   border: none;
   background: rgba(148, 163, 184, 0.14);
@@ -482,6 +495,10 @@
   font-size: 14px;
   font-weight: 700;
   color: #0f172a;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wbr-popover-head-actions {
@@ -584,6 +601,20 @@
   border: 1px solid #cbd5e1;
 }
 
+.wbr-hit-pill-shared-core {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fda4af;
+  font-weight: 600;
+}
+
+.wbr-popover-note {
+  margin: 0 0 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #94a3b8;
+}
+
 .wbr-popover-loading {
   color: #64748b;
   font-size: 12px;
@@ -672,6 +703,10 @@
 }
 
 .wbr-primary-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
   padding: 4px 11px;
   border-radius: 999px;
   border: 1px solid rgba(37, 99, 235, 0.25);
@@ -695,6 +730,10 @@
 }
 
 .wbr-text-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
   border: none;
   background: transparent;
   color: #64748b;
@@ -827,6 +866,73 @@ html[data-theme="dark"] .wbr-profile-inline-btn.is-checked {
   background: rgba(148, 163, 184, 0.15);
   border-color: rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
+}
+
+html[data-theme="dark"] .wbr-usercard-btn {
+  background: #24262e;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #cbd5e1;
+}
+
+html[data-theme="dark"] .wbr-usercard-btn:hover {
+  background: rgba(37, 99, 235, 0.22);
+  border-color: rgba(59, 130, 246, 0.42);
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .wbr-usercard-btn.is-checked {
+  background: #24262e;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .wbr-usercard-btn.is-warn {
+  background: rgba(180, 83, 9, 0.22);
+  border-color: rgba(245, 158, 11, 0.45);
+  color: #fcd34d;
+}
+
+html[data-theme="dark"] .wbr-usercard-btn.is-high {
+  background: rgba(185, 28, 28, 0.24);
+  border-color: rgba(248, 113, 113, 0.45);
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .wbr-usercard-btn.is-muted {
+  background: rgba(185, 28, 28, 0.18);
+  border-color: rgba(248, 113, 113, 0.35);
+  color: #fca5a5;
+}
+
+html[data-theme="dark"] .wbr-hit-pill.wbr-hit-pill-shared-core {
+  background: rgba(225, 29, 72, 0.22);
+  border-color: rgba(251, 113, 133, 0.52);
+  color: #fda4af;
+}
+
+html[data-theme="dark"] .wbr-primary-btn {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.38);
+  color: #93c5fd;
+}
+
+html[data-theme="dark"] .wbr-primary-btn:hover {
+  background: #2563eb;
+  border-color: #3b82f6;
+  color: #ffffff;
+}
+
+html[data-theme="dark"] .wbr-text-btn {
+  color: #94a3b8;
+}
+
+html[data-theme="dark"] .wbr-text-btn:hover {
+  background: rgba(148, 163, 184, 0.18);
+  color: #f8fafc;
+}
+
+html[data-theme="dark"] .wbr-popover-note {
+  color: #64748b;
 }
 
 html[data-theme="dark"] .wbr-shield-banner {

@@ -109,6 +109,68 @@
     let activeLoadingTarget = null;
     let activeLoadingReqSeq = 0;
 
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const ICON_SHAPES = {
+      search: [
+        ["circle", { cx: "7", cy: "7", r: "4.6" }],
+        ["path", { d: "M10.6 10.6L14 14" }]
+      ],
+      refresh: [
+        ["path", { d: "M13.5 8a5.5 5.5 0 1 1-1.35-3.6" }],
+        ["path", { d: "M13.5 2.5v2.8h-2.8" }]
+      ],
+      eye: [
+        ["path", { d: "M1.8 8s2.3-4.2 6.2-4.2S14.2 8 14.2 8s-2.3 4.2-6.2 4.2S1.8 8 1.8 8z" }],
+        ["circle", { cx: "8", cy: "8", r: "1.9" }]
+      ],
+      ban: [
+        ["circle", { cx: "8", cy: "8", r: "5.5" }],
+        ["path", { d: "M4.1 4.1L11.9 11.9" }]
+      ],
+      alert: [
+        ["path", { d: "M8 2.2L14.2 13H1.8L8 2.2z" }],
+        ["path", { d: "M8 6.2v3.2" }],
+        ["circle", { cx: "8", cy: "11.2", r: "0.5", fill: "currentColor", stroke: "none" }]
+      ],
+      check: [
+        ["path", { d: "M3 8.4L6.4 11.8L13.2 4.8" }]
+      ]
+    };
+
+    function createSvgIcon(name, size) {
+      const shapes = ICON_SHAPES[name];
+      if (!shapes || typeof doc.createElement !== "function") return null;
+      const svg = typeof doc.createElementNS === "function"
+        ? doc.createElementNS(SVG_NS, "svg")
+        : doc.createElement("svg");
+      svg.setAttribute("viewBox", "0 0 16 16");
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("class", "wbr-ico");
+      if (size) {
+        svg.style.width = `${size}px`;
+        svg.style.height = `${size}px`;
+      }
+      for (const [tag, attrs] of shapes) {
+        const node = typeof doc.createElementNS === "function"
+          ? doc.createElementNS(SVG_NS, tag)
+          : doc.createElement(tag);
+        for (const [k, v] of Object.entries(attrs)) {
+          node.setAttribute(k, v);
+        }
+        svg.appendChild(node);
+      }
+      return svg;
+    }
+
+    function setBtnIconLabel(el, iconName, label, size) {
+      el.textContent = "";
+      const ico = iconName ? createSvgIcon(iconName, size) : null;
+      if (ico) el.appendChild(ico);
+      const span = doc.createElement("span");
+      span.textContent = label;
+      el.appendChild(span);
+    }
+
     function ensureAccountDetectedLazy() {
       if (accountDetectTriggered) return;
       const syncAge = Date.now() - (Number(state.viewerFollowingSyncedAt) || 0);
@@ -939,13 +1001,13 @@
           summary.textContent = "访客视角：近期公开关注无明显特征重合";
         } else if (data.level !== "warn" && data.level !== "high") {
           const prob = data.probability || Engine.computeProbabilityFromScore(data.score ?? data.hitCount, data.hitCount);
-          summary.textContent = `访客视角：未达预警线（重合 ${data.hitCount} 位 · 得分 ${data.score ?? 0} · 匹配度 ${prob}%）`;
+          summary.textContent = `访客视角：未达预警线（重合 ${data.hitCount} 位 · 得分 ${data.score ?? 0} · 特征倾向 ${prob}%）`;
         } else {
           const catText = topCats.length > 0 ? topCats.map((c) => `「${c}」`).join("") : "特定圈层";
           const prob = data.probability || Engine.computeProbabilityFromScore(data.score ?? data.hitCount, data.hitCount);
           summary.textContent = data.level === "warn"
             ? `访客视角：存在关注倾向 · ${prob}%（命中 ${data.hitCount} 位，偏${catText}）`
-            : `访客视角：高度符合定律 · ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
+            : `访客视角：显著特征倾向 · ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
         }
       } else if (data.exemptReason === "self") {
         summary.textContent = "本人账号 · 默认免预警";
@@ -964,7 +1026,7 @@
         const prob = data.probability || Engine.computeProbabilityFromScore(data.score ?? data.hitCount, data.hitCount);
         summary.textContent = data.level === "warn"
           ? `存在关注倾向 · ${prob}%（命中 ${data.hitCount} 位，偏${catText}）`
-          : `高度符合定律 · ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
+          : `显著特征倾向 · ${prob}%（命中 ${data.hitCount} 位，集中在${catText}）`;
       }
       pop.appendChild(summary);
 
@@ -974,18 +1036,31 @@
         const followers = Engine.formatCompactCount(data.followersCount);
         const friends = Engine.formatCompactCount(data.friendsCount);
         const scoreText = data.score !== undefined ? data.score : (data.hitCount || 0);
+        const hitList = Array.isArray(data.hitItems) ? data.hitItems : [];
+        const exemptSharedCnt = hitList.filter((x) => x.sharedWithViewer && x.sharedExempt !== false).length;
+        const coreSharedCnt = hitList.filter((x) => x.sharedWithViewer && x.sharedExempt === false).length;
+        let sharedSuffix = "";
+        if (!isVisitorSim && (exemptSharedCnt > 0 || coreSharedCnt > 0)) {
+          if (exemptSharedCnt > 0 && coreSharedCnt > 0) {
+            sharedSuffix = ` · 共同关注 ${exemptSharedCnt} 免计/${coreSharedCnt} 核心计分`;
+          } else if (coreSharedCnt > 0) {
+            sharedSuffix = ` · 含 ${coreSharedCnt} 位共同关注核心(保留计分)`;
+          } else {
+            sharedSuffix = ` · 含 ${exemptSharedCnt} 位共同关注免计`;
+          }
+        }
         if (isVisitorSim) {
           meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 已检 ${data.scannedCount || 0} 位 · 真实得分 ${scoreText}（仅自测参考）`;
         } else if (data.exemptReason === "self") {
           meta.textContent = data.fastSkippedExempt
-            ? `粉丝 ${followers} · 关注 ${friends} · 共同关注免计分`
+            ? `粉丝 ${followers} · 关注 ${friends} · 本人默认免预警`
             : `粉丝 ${followers} · 关注 ${friends} · 已检 ${data.scannedCount || 0} 位（免计分）`;
         } else if (data.fastSkippedExempt) {
           meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 已快速豁免`;
         } else if (data.scanMode === "fast_clean" || data.scanMode === "fast_high") {
-          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 快筛 ${data.scannedCount || 0} 位 · 得分 ${scoreText}`;
+          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 快筛 ${data.scannedCount || 0} 位 · 得分 ${scoreText}${sharedSuffix}`;
         } else {
-          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 已检 ${data.scannedCount || 0} 位 · 得分 ${scoreText}`;
+          meta.textContent = `粉丝 ${followers} · 关注 ${friends} · 已检 ${data.scannedCount || 0} 位 · 得分 ${scoreText}${sharedSuffix}`;
         }
         pop.appendChild(meta);
       }
@@ -1010,10 +1085,16 @@
         hits.className = "wbr-popover-hits";
         for (const item of data.hitItems) {
           const pill = doc.createElement("span");
-          if (item.sharedWithViewer) {
+          const isSharedExempt = Boolean(item.sharedWithViewer && item.sharedExempt !== false);
+          const isSharedCore = Boolean(item.sharedWithViewer && item.sharedExempt === false);
+          if (isSharedExempt) {
             pill.className = "wbr-hit-pill wbr-hit-pill-shared";
-            pill.textContent = `${item.name} · 共同关注(免计分)`;
-            pill.title = "您本人也关注了该账号，不计入风险得分";
+            pill.textContent = `${item.name} · 共同免计`;
+            pill.title = "您也关注的泛话题/股评特征，默认不计入倾向分";
+          } else if (isSharedCore) {
+            pill.className = "wbr-hit-pill wbr-hit-pill-shared-core";
+            pill.textContent = `${item.name} · 您也关注`;
+            pill.title = `高纯度核心特征（权重 ${item.weight ?? 1}），默认保留计分；可在设置页开启「严格同圈豁免」`;
           } else {
             pill.className = "wbr-hit-pill";
             pill.textContent = item.viaAlias
@@ -1026,6 +1107,13 @@
         pop.appendChild(hits);
       }
 
+      if (!data._isSelfPlaceholder && !data._isMutedPlaceholder && ((data.hitCount || 0) > 0 || isVisitorSim)) {
+        const note = doc.createElement("div");
+        note.className = "wbr-popover-note";
+        note.textContent = "统计倾向与结构相似参考，不构成对账号的定性判断";
+        pop.appendChild(note);
+      }
+
       const footer = doc.createElement("div");
       footer.className = "wbr-popover-footer";
 
@@ -1033,13 +1121,14 @@
         const visitorBtn = doc.createElement("button");
         visitorBtn.type = "button";
         visitorBtn.className = isVisitorSim ? "wbr-act-btn" : "wbr-act-btn wbr-act-btn-primary";
-        const visitorBtnLabel = isVisitorSim ? "🔄 重新自测" : "🧪 模拟访客自测";
-        visitorBtn.textContent = visitorBtnLabel;
+        const visitorIcon = isVisitorSim ? "refresh" : "eye";
+        const visitorBtnLabel = isVisitorSim ? "重新自测" : "模拟访客自测";
+        setBtnIconLabel(visitorBtn, visitorIcon, visitorBtnLabel, 11);
         visitorBtn.addEventListener("click", async (ev) => {
           ev.stopPropagation();
           ev.preventDefault();
           visitorBtn.disabled = true;
-          visitorBtn.textContent = "测算中...";
+          setBtnIconLabel(visitorBtn, "refresh", "测算中...", 11);
           try {
             const fallbackAnchor = anchorEl && anchorEl.isConnected ? anchorEl : anchorRect;
             const res = await triggerUserCheck(targetUser, fallbackAnchor, true, {
@@ -1049,12 +1138,12 @@
             });
             if (!res && visitorBtn.isConnected) {
               visitorBtn.disabled = false;
-              visitorBtn.textContent = visitorBtnLabel;
+              setBtnIconLabel(visitorBtn, visitorIcon, visitorBtnLabel, 11);
             }
           } catch (_) {
             if (visitorBtn.isConnected) {
               visitorBtn.disabled = false;
-              visitorBtn.textContent = visitorBtnLabel;
+              setBtnIconLabel(visitorBtn, visitorIcon, visitorBtnLabel, 11);
             }
           }
         });
@@ -1090,9 +1179,10 @@
         const isPlaceholder = Boolean(data._isSelfPlaceholder || data._isMutedPlaceholder);
         const isFastExempt = Boolean(!isPlaceholder && data.fastSkippedExempt);
         const isFastMode = Boolean(!isPlaceholder && !isFastExempt && (data.scanMode === "fast_clean" || data.scanMode === "fast_high"));
+        const recheckIcon = isPlaceholder || isFastExempt ? "search" : "refresh";
         const recheckLabel = isPlaceholder
-          ? "🔍 查近期关注"
-          : (isFastExempt ? "🔍 深查明细" : (isFastMode ? "🔄 查全量" : "重新查询"));
+          ? "查近期关注"
+          : (isFastExempt ? "深查明细" : (isFastMode ? "查全量" : "重新查询"));
         const recheckOpts = isFastExempt
           ? { forceDeepScan: true, fullScan: true }
           : (isFastMode ? { fullScan: true } : {});
@@ -1100,23 +1190,23 @@
         const recheckBtn = doc.createElement("button");
         recheckBtn.type = "button";
         recheckBtn.className = "wbr-act-btn";
-        recheckBtn.textContent = recheckLabel;
+        setBtnIconLabel(recheckBtn, recheckIcon, recheckLabel, 11);
         recheckBtn.addEventListener("click", async (ev) => {
           ev.stopPropagation();
           ev.preventDefault();
           recheckBtn.disabled = true;
-          recheckBtn.textContent = "查询中...";
+          setBtnIconLabel(recheckBtn, "refresh", "查询中...", 11);
           try {
             const fallbackAnchor = anchorEl && anchorEl.isConnected ? anchorEl : anchorRect;
             const res = await triggerUserCheck(targetUser, fallbackAnchor, true, recheckOpts);
             if (!res && recheckBtn.isConnected) {
               recheckBtn.disabled = false;
-              recheckBtn.textContent = recheckLabel;
+              setBtnIconLabel(recheckBtn, recheckIcon, recheckLabel, 11);
             }
           } catch (_) {
             if (recheckBtn.isConnected) {
               recheckBtn.disabled = false;
-              recheckBtn.textContent = recheckLabel;
+              setBtnIconLabel(recheckBtn, recheckIcon, recheckLabel, 11);
             }
           }
         });
@@ -1649,12 +1739,16 @@
             !cached.exemptReason &&
             cached.hitCount > 0
         );
-        hoverBtnEl.textContent = isFlagged ? "详情" : "✓ 已查";
+        if (isFlagged) {
+          hoverBtnEl.textContent = "详情";
+        } else {
+          setBtnIconLabel(hoverBtnEl, "check", "已查", 11);
+        }
         hoverBtnEl.disabled = false;
         hoverBtnEl.className = "wbr-hover-check-btn is-checked";
         hoverBtnEl.title = "点击查看关注列表检测详情";
       } else {
-        hoverBtnEl.textContent = "🔍 查成分";
+        setBtnIconLabel(hoverBtnEl, "search", "查成分", 11);
         hoverBtnEl.disabled = false;
         hoverBtnEl.className = "wbr-hover-check-btn";
         hoverBtnEl.title = "看看TA平时关注哪些圈子";
@@ -1667,7 +1761,7 @@
       btn.type = "button";
       btn.className = "wbr-hover-check-btn";
       btn.setAttribute("data-wbr-hover-btn", "1");
-      btn.textContent = "🔍 查成分";
+      setBtnIconLabel(btn, "search", "查成分", 11);
       bindStopPropagation(btn);
       btn.addEventListener("pointerenter", () => {
         if (hoverHideTimer) {
@@ -2418,7 +2512,7 @@
       if (existingBar) {
         const existingScanBtn = existingBar.querySelector(".wbr-primary-btn");
         if (existingScanBtn && !batchScanning) {
-          existingScanBtn.textContent = isDetailRepostTabActive() ? "🔍 扫描可见转发" : "🔍 扫描可见评论";
+          setBtnIconLabel(existingScanBtn, "search", isDetailRepostTabActive() ? "扫描可见转发" : "扫描可见评论", 12);
         }
         return;
       }
@@ -2432,7 +2526,7 @@
       const scanBtn = doc.createElement("button");
       scanBtn.type = "button";
       scanBtn.className = "wbr-primary-btn";
-      scanBtn.textContent = isDetailRepostTabActive() ? "🔍 扫描可见转发" : "🔍 扫描可见评论";
+      setBtnIconLabel(scanBtn, "search", isDetailRepostTabActive() ? "扫描可见转发" : "扫描可见评论", 12);
 
       const progressWrap = doc.createElement("div");
       progressWrap.className = "wbr-inline-progress";
@@ -2874,7 +2968,7 @@
           (state.account && state.account.screenName && user.screenName && namesMatchInsensitive(user.screenName, state.account.screenName))
       );
       if (isSelfProfile) {
-        btn.textContent = "✓ 本人免预警 · 访客自测";
+        setBtnIconLabel(btn, "eye", "本人免预警 · 访客自测", 12);
         btn.className = "wbr-profile-inline-btn is-checked";
         btn.title = "您本人的主页默认免除预警，点击可查看说明或模拟访客视角自测真实得分";
       } else if (cached) {
@@ -2884,11 +2978,15 @@
             !cached.exemptReason &&
             cached.hitCount > 0
         );
-        btn.textContent = isFlagged ? "详情" : "✓ 已查关注定律";
+        if (isFlagged) {
+          setBtnIconLabel(btn, "alert", "详情", 12);
+        } else {
+          setBtnIconLabel(btn, "check", "已查关注定律", 12);
+        }
         btn.className = "wbr-profile-inline-btn is-checked";
         btn.title = "点击查看关注列表定律详情、重查或屏蔽拉黑";
       } else {
-        btn.textContent = "🔍 查关注定律";
+        setBtnIconLabel(btn, "search", "查关注定律", 12);
         btn.className = "wbr-profile-inline-btn";
         btn.title = "查看该博主近期关注圈层分布";
       }
@@ -3112,7 +3210,7 @@
       const btn = doc.createElement("button");
       btn.type = "button";
       btn.className = "wbr-primary-btn";
-      btn.textContent = "🔄 同步到屏蔽名单";
+      setBtnIconLabel(btn, "refresh", "同步到屏蔽名单", 12);
       btn.addEventListener("click", async () => {
         btn.disabled = true;
         const resp = await sendMessage({ type: "WBR_SYNC_BLOCKLIST" });
@@ -3296,36 +3394,41 @@
       btn.disabled = false;
       if (mutedMatch) {
         btn.className = "wbr-usercard-btn is-muted";
-        btn.textContent = mutedMatch.source === "weibo_block" ? "🚫 已在微博黑名单 · 查看" : "🚫 已本地屏蔽 · 查看";
+        setBtnIconLabel(btn, "ban", mutedMatch.source === "weibo_block" ? "已在微博黑名单 · 查看" : "已本地屏蔽 · 查看", 12);
         btn.title = "点击查看屏蔽详情或取消屏蔽";
         return;
       }
       if (cached) {
         if (cached.exemptReason === "self") {
           btn.className = "wbr-usercard-btn is-checked";
-          btn.textContent = "✓ 本人免预警 · 访客自测";
+          setBtnIconLabel(btn, "eye", "本人免预警 · 访客自测", 12);
           btn.title = "点击打开详情浮窗或进行访客视角自测";
           return;
         }
         if (cached.exemptReason === "following") {
           btn.className = "wbr-usercard-btn is-checked";
-          btn.textContent = "✓ 已关注 · 免预警";
+          setBtnIconLabel(btn, "check", "已关注 · 免预警", 12);
           btn.title = "点击查看关注列表详情";
           return;
         }
         if (cached.exemptReason === "org_verified") {
           btn.className = "wbr-usercard-btn is-checked";
-          btn.textContent = "✓ 机构蓝V · 免预警";
+          setBtnIconLabel(btn, "check", "机构蓝V · 免预警", 12);
           btn.title = "点击查看详情";
           return;
         }
         if ((cached.level === "high" || cached.level === "warn") && !cached.hiddenFollowing && cached.hitCount > 0) {
           const prob = cached.probability || Engine.computeProbabilityFromScore(cached.score ?? cached.hitCount, cached.hitCount);
           btn.className = cached.level === "high" ? "wbr-usercard-btn is-high" : "wbr-usercard-btn is-warn";
-          btn.textContent = cached.level === "high"
-            ? `⚠ 定律 ${prob}% · 命中 ${cached.hitCount} 位`
-            : `⚠ 倾向 ${prob}% · 命中 ${cached.hitCount} 位`;
-          btn.title = "点击查看关注列表定律匹配明细";
+          setBtnIconLabel(
+            btn,
+            "alert",
+            cached.level === "high"
+              ? `显著倾向 ${prob}% · 命中 ${cached.hitCount} 位`
+              : `倾向提示 ${prob}% · 命中 ${cached.hitCount} 位`,
+            12
+          );
+          btn.title = "点击查看关注列表倾向参考明细";
           return;
         }
         if (cached.hiddenFollowing) {
@@ -3335,12 +3438,12 @@
           return;
         }
         btn.className = "wbr-usercard-btn is-checked";
-        btn.textContent = "✓ 已查 · 未见明显倾向";
+        setBtnIconLabel(btn, "check", "已查 · 未见明显倾向", 12);
         btn.title = "点击查看关注列表检测详情";
         return;
       }
       btn.className = "wbr-usercard-btn";
-      btn.textContent = "🔍 查成分";
+      setBtnIconLabel(btn, "search", "查成分", 12);
       btn.title = "查看近期关注倾向";
     }
 

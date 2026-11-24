@@ -20,8 +20,8 @@
   const DB_NAME = "wbr_radar_cache_db";
   const DB_VERSION = 3;
   const DB_STORE = "radar_results";
-  const ALGO_VERSION = "1.5.4";
-  const COMPATIBLE_ALGO_VERSIONS = new Set(["1.3.0", "1.3.1", "1.4.0", "1.4.1", "1.5.0", "1.5.1", "1.5.2", "1.5.3", "1.5.4"]);
+  const ALGO_VERSION = "1.5.5";
+  const COMPATIBLE_ALGO_VERSIONS = new Set(["1.5.5"]);
   const MODEL_SCHEMA_VERSION = 3;
   const UX_MODE_VERSION = 2;
 
@@ -98,89 +98,102 @@
   }
 
   const DEFAULT_FEATURE_MATRIX = [
-    // 1. 时政与地缘话题 (politics) - 33
-    makeEntry("pol_baorong", "包容万物恒河水", "1671109627", "politics", 1.22),
-    makeEntry("pol_guancha", "观察者网", "1887344341", "politics", 0.34, ["观察者网出行中心"], ["6060307497"], "含关联号 观察者网出行中心"),
-    makeEntry("pol_xiangligang", "飞象网项立刚", "1481944214", "politics", 1.11),
-    makeEntry("pol_lukewen", "卢克文", "1875293522", "politics", 0.80),
-    makeEntry("pol_pingyuan", "平原公子赵胜", "1564834725", "politics", 1.16),
-    makeEntry("pol_nanya", "南亚研究通讯", "5528109788", "politics", 0.68),
-    makeEntry("pol_faguopiao", "法国漂", "2323101850", "politics", 0.85),
-    makeEntry("pol_shuyu", "树语treetalk", "7942871901", "politics", 1.45),
-    makeEntry("pol_daiyuxiao", "戴雨潇Dai", "1686096655", "politics", 1.17),
-    makeEntry("pol_lijianqiu", "李建秋的世界", "1687813073", "politics", 1.21, ["李建秋的窝窝"], ["7991337010"], "含关联小号 李建秋的窝窝"),
-    makeEntry("pol_creamy", "Creamy蕉", "7690478167", "politics", 1.09),
+    // 1. 时政与地缘话题 (politics) - 43
+    makeEntry("pol_shuyu", "树语treetalk", "7942871901", "politics", 1.28),
+    makeEntry("pol_2049world", "2049年的世界", "1158166641", "politics", 1.18, [], [], "时政与政经叙事博主"),
+    makeEntry("pol_daiyuxiao", "戴雨潇Dai", "1686096655", "politics", 1.14),
+    makeEntry("pol_creamy", "Creamy蕉", "7690478167", "politics", 1.13),
+    makeEntry("pol_zhiyaojun", "止谣君", "1837234894", "politics", 1.12, [], [], "反殖与时政评论博主"),
+    makeEntry("pol_leige", "正直的磊哥", "1771474495", "politics", 1.09),
+    makeEntry("pol_shuita", "水獭一般编-阿怡", "6285204404", "politics", 1.07),
+    makeEntry("pol_fanyongpeng", "范勇鹏-", "7508191062", "politics", 1.06),
+    makeEntry("pol_faguopiao", "法国漂", "2323101850", "politics", 1.03),
+    makeEntry("pol_huaitudou", "一个坏土豆", "7384186077", "politics", 1.03),
+    makeEntry("pol_gaozhikai", "高志凯频道", "7795630224", "politics", 1.01, [], [], "强立场国际问题学者"),
     makeEntry("pol_wuxin", "无心简影", "5564927603", "politics", 1.00),
-    makeEntry("pol_shuita", "水獭一般编-阿怡", "6285204404", "politics", 1.02),
-    makeEntry("pol_leige", "正直的磊哥", "1771474495", "politics", 1.05),
-    makeEntry("pol_guyan", "孤烟暮蝉", "2150758415", "politics", 0.54),
-    makeEntry("pol_yuyuan", "玉渊谭天", "7040797671", "politics", 0.41),
-    makeEntry("pol_huaitudou", "一个坏土豆", "7384186077", "politics", 1.09),
-    makeEntry("pol_shenyi", "沈逸", "1157864602", "politics", 0.52),
-    makeEntry("pol_taiwanshashi", "台湾傻事", "5721376081", "politics", 0.66),
-    makeEntry("pol_simapingbang", "司马平邦", "1400887105", "politics", 0.15),
-    makeEntry("pol_ziwuxiashi", "子午侠士", "5067914848", "politics", 0.88),
-    makeEntry("pol_zhaozheng", "赵铮-同志", "5365769881", "politics", 0.82),
-    makeEntry("pol_jincanrong", "金灿荣教授", "7264589101", "politics", 0.53),
-    makeEntry("pol_zhangbeihai", "胜利主义章北海", "2281157913", "politics", 0.49),
-    makeEntry("pol_xudezhi", "徐德智不在UN", "1830834613", "politics", 0.80),
-    makeEntry("pol_nanguiguyi", "南归孤夷", "7782884695", "politics", 0.83),
-    makeEntry("pol_fanyongpeng", "范勇鹏-", "7508191062", "politics", 1.16),
-    makeEntry("pol_shipindao", "食贫道", "6420726021", "politics", 0.72),
+    makeEntry("pol_pingyuan", "平原公子赵胜", "1564834725", "politics", 0.99),
+    makeEntry("pol_xiangligang", "飞象网项立刚", "1481944214", "politics", 0.96),
+    makeEntry("pol_nanya", "南亚研究通讯", "5528109788", "politics", 0.96),
+    makeEntry("pol_xiping", "西平郡御史", "1863031164", "politics", 0.94, [], [], "历史与时政民族叙事"),
+    makeEntry("pol_jinxue", "金靴RedBoy", "7255302319", "politics", 0.89, [], [], "强立场时政长文评论"),
+    makeEntry("pol_zhaozheng", "赵铮-同志", "5365769881", "politics", 0.89),
     makeEntry("pol_boston", "波士顿圆脸", "3903189121", "politics", 0.86),
-    makeEntry("pol_sputnik", "俄罗斯卫星通讯社", "2181597154", "politics", 0.15),
-    makeEntry("pol_wangxiao", "王骁Albert", "5649624264", "politics", 0.74),
-    makeEntry("pol_diba", "帝吧官微", "7010131150", "politics", 0.71),
-    makeEntry("pol_tuzhuxi", "兔主席", "1221171697", "politics", 0.62),
+    makeEntry("pol_chaitai", "拆台CT", "6059492811", "politics", 0.86, [], [], "科技与反殖时政评论"),
+    makeEntry("pol_lijianqiu", "李建秋的世界", "1687813073", "politics", 0.84, ["李建秋的窝窝"], ["7991337010"], "含关联小号 李建秋的窝窝"),
+    makeEntry("pol_baorong", "包容万物恒河水", "1671109627", "politics", 0.82),
+    makeEntry("pol_xudezhi", "徐德智不在UN", "1830834613", "politics", 0.80),
+    makeEntry("pol_diba", "帝吧官微", "7010131150", "politics", 0.78),
+    makeEntry("pol_huanxiangkuang", "幻想狂劉先生", "2155926845", "politics", 0.77, [], [], "历史与时政键政大V"),
+    makeEntry("pol_lukewen", "卢克文", "1875293522", "politics", 0.76),
+    makeEntry("pol_zhangbeihai", "胜利主义章北海", "2281157913", "politics", 0.75),
+    makeEntry("pol_ziwuxiashi", "子午侠士", "5067914848", "politics", 0.75),
+    makeEntry("pol_jincanrong", "金灿荣教授", "7264589101", "politics", 0.73),
+    makeEntry("pol_shenyi", "沈逸", "1157864602", "politics", 0.72),
+    makeEntry("pol_nanguiguyi", "南归孤夷", "7782884695", "politics", 0.72),
+    makeEntry("pol_xuji", "徐记观察", "1895859130", "politics", 0.68, [], [], "时政正能量大V"),
+    makeEntry("pol_yuyuan", "玉渊谭天", "7040797671", "politics", 0.63),
+    makeEntry("pol_tuzhuxi", "兔主席", "1221171697", "politics", 0.61),
+    makeEntry("pol_taiwanshashi", "台湾傻事", "5721376081", "politics", 0.61),
+    makeEntry("pol_wangxiao", "王骁Albert", "5649624264", "politics", 0.54),
+    makeEntry("pol_shipindao", "食贫道", "6420726021", "politics", 0.50),
+    makeEntry("pol_guyan", "孤烟暮蝉", "2150758415", "politics", 0.41),
+    makeEntry("pol_simanan", "司马南", "1263406744", "politics", 0.37, [], [], "老牌时政代表大V"),
+    makeEntry("pol_guancha", "观察者网", "1887344341", "politics", 0.35, ["观察者网出行中心"], ["6060307497"], "含关联号 观察者网出行中心"),
+    makeEntry("pol_sputnik", "俄罗斯卫星通讯社", "2181597154", "politics", 0.29),
+    makeEntry("pol_diguaxiong", "地瓜熊老六", "3939426052", "politics", 0.15, [], [], "老牌时政正能量大V"),
+    makeEntry("pol_simapingbang", "司马平邦", "1400887105", "politics", 0.15),
 
-    // 2. 情感锐评与热门大V (social) - 14
-    makeEntry("soc_ximen", "西门大妈", "6154203482", "social", 0.80, ["西门大妈没走丢"], ["7755237035"], "含关联小号 西门大妈没走丢"),
-    makeEntry("soc_daobili", "皇城根下刀笔吏", "2032759640", "social", 0.95),
+    // 2. 情感锐评与热门大V (social) - 13
+    makeEntry("soc_caozijian", "曹子建同学2000", "2290414064", "social", 1.21),
+    makeEntry("soc_ximen", "西门大妈", "6154203482", "social", 1.18, ["西门大妈没走丢", "西城大娘"], ["7755237035", "3626282805"], "含关联小号 西门大妈没走丢 / 西城大娘"),
+    makeEntry("soc_tutou", "兔头学姐张铁根", "6994770449", "social", 1.09, [], [], "社会热点与情绪锐评博主"),
+    makeEntry("soc_chenlan", "作家陈岚", "1463707815", "social", 0.90),
     makeEntry("soc_naiba", "奶霸知道", "1004853823", "social", 0.80, ["是奶霸"], ["5646157925"], "含关联小号 是奶霸"),
-    makeEntry("soc_shuangye", "霜叶", "1980768563", "social", 0.30),
-    makeEntry("soc_caozijian", "曹子建同学2000", "2290414064", "social", 1.18),
-    makeEntry("soc_kailei", "凯雷", "1496883514", "social", 0.34),
-    makeEntry("soc_situka98", "斯图卡98", "3279710155", "social", 0.34),
-    makeEntry("soc_sven_shi", "sven_shi", "2382064902", "social", 0.55),
-    makeEntry("soc_lushihan", "卢诗翰", "3276099007", "social", 0.69),
-    makeEntry("soc_wuliufang", "吴柳芳", "2532395340", "social", 0.30),
-    makeEntry("soc_wanghailin", "汪海林", "1497714867", "social", 0.76),
-    makeEntry("soc_xionglvshi", "专业戳轮胎熊律师", "1471143571", "social", 0.60),
-    makeEntry("soc_liji", "理记", "1907166177", "social", 0.48),
-    makeEntry("soc_chenlan", "作家陈岚", "1463707815", "social", 0.80),
+    makeEntry("soc_lushihan", "卢诗翰", "3276099007", "social", 0.80),
+    makeEntry("soc_xionglvshi", "专业戳轮胎熊律师", "1471143571", "social", 0.80),
+    makeEntry("soc_sven_shi", "sven_shi", "2382064902", "social", 0.80),
+    makeEntry("soc_daobili", "皇城根下刀笔吏", "2032759640", "social", 0.64),
+    makeEntry("soc_wanghailin", "汪海林", "1497714867", "social", 0.63),
+    makeEntry("soc_kailei", "凯雷", "1496883514", "social", 0.53),
+    makeEntry("soc_liji", "理记", "1907166177", "social", 0.50),
+    makeEntry("soc_situka98", "斯图卡98", "3279710155", "social", 0.17),
 
-    // 3. 科技、科普与二次元 (tech_acg) - 5
-    makeEntry("tacg_yili", "伊利达雷之怒", "3089487123", "tech_acg", 0.83),
-    makeEntry("tacg_minv", "谜之免女郎X", "3689493785", "tech_acg", 1.04),
-    makeEntry("tacg_aokamu", "奥卡姆剃刀", "1820201245", "tech_acg", 0.27),
-    makeEntry("tacg_hanlu", "韩路", "1192966660", "tech_acg", 0.30),
-    makeEntry("tacg_lishenle", "里神楽", "1842706721", "tech_acg", 0.74),
+    // 3. 科技、科普与二次元 (tech_acg) - 4
+    makeEntry("tacg_theresa", "泰蕾莎泰斯塔羅莎", "2621045097", "tech_acg", 1.19, [], [], "二次元与时政情绪转发"),
+    makeEntry("tacg_yili", "伊利达雷之怒", "3089487123", "tech_acg", 1.06),
+    makeEntry("tacg_minv", "谜之免女郎X", "3689493785", "tech_acg", 0.99),
+    makeEntry("tacg_lishenle", "里神楽", "1842706721", "tech_acg", 0.80, ["里神楽喵"], ["7971101702"], "含关联小号 里神楽喵"),
 
     // 4. 短线炒股资讯号 (stock) - 8
-    makeEntry("stk_qiniu", "骑牛的靓仔", "7993971687", "stock", 0.28),
-    makeEntry("stk_manman", "满满大牛场", "7558526914", "stock", 0.21),
-    makeEntry("stk_dingji", "顶级Da野", "7985389235", "stock", 0.12),
-    makeEntry("stk_haoyun", "好运股添乐", "7914027062", "stock", 0.31),
-    makeEntry("stk_suidi", "随地大小股", "7397352101", "stock", 0.31),
-    makeEntry("stk_wadigua", "挖地瓜的超级鹿鼎公", "3962719063", "stock", 0.27),
-    makeEntry("stk_zhazha", "渣渣超短", "7350424564", "stock", 0.13),
-    makeEntry("stk_xiaoyao", "逍遥图腾", "2965936722", "stock", 0.27),
+    makeEntry("stk_suidi", "随地大小股", "7397352101", "stock", 0.29),
+    makeEntry("stk_manman", "满满大牛场", "7558526914", "stock", 0.28),
+    makeEntry("stk_wadigua", "挖地瓜的超级鹿鼎公", "3962719063", "stock", 0.25),
+    makeEntry("stk_dingji", "顶级Da野", "7985389235", "stock", 0.23),
+    makeEntry("stk_xiaoyao", "逍遥图腾", "2965936722", "stock", 0.23),
+    makeEntry("stk_haoyun", "好运股添乐", "7914027062", "stock", 0.23),
+    makeEntry("stk_zhazha", "渣渣超短", "7350424564", "stock", 0.21),
+    makeEntry("stk_qiniu", "骑牛的靓仔", "7993971687", "stock", 0.19),
 
-    // 5. 军事与防务话题 (military) - 7
-    makeEntry("mil_wanghu", "王虎的舰桥", "6545577536", "military", 1.17),
-    makeEntry("mil_muxing", "牧星观海天", "1638620395", "military", 1.00, ["牧星观天海"], ["6080390942"], "含关联号 牧星观天海"),
-    makeEntry("mil_nanhai", "南海的浪涛", "1142487595", "military", 0.75),
-    makeEntry("mil_zhanjia", "战甲装研菌", "5035763146", "military", 0.25),
-    makeEntry("mil_feiyang", "飞扬军事铁背心", "2139949234", "military", 0.93, ["飞扬军事"], ["1759354161"], "含原名号 飞扬军事"),
-    makeEntry("mil_shamu", "沙姆雄狮_EL", "7399894004", "military", 1.09),
-    makeEntry("mil_huanya", "寰亚SYHP", "5393135816", "military", 0.37),
+    // 5. 军事与防务话题 (military) - 8
+    makeEntry("mil_muxing", "牧星观海天", "1638620395", "military", 1.10, ["牧星观天海"], ["6080390942"], "含关联号 牧星观天海"),
+    makeEntry("mil_wanghu", "王虎的舰桥", "6545577536", "military", 1.10),
+    makeEntry("mil_zhangzhidong", "洋务先驱张之洞", "1914919243", "military", 0.85, [], [], "军事与防务话题大V"),
+    makeEntry("mil_huanya", "寰亚SYHP", "5393135816", "military", 0.80),
+    makeEntry("mil_nanhai", "南海的浪涛", "1142487595", "military", 0.79),
+    makeEntry("mil_shamu", "沙姆雄狮_EL", "7399894004", "military", 0.74),
+    makeEntry("mil_feiyang", "飞扬军事铁背心", "2139949234", "military", 0.67, ["飞扬军事"], ["1759354161"], "含原名号 飞扬军事"),
+    makeEntry("mil_zhanjia", "战甲装研菌", "5035763146", "military", 0.44),
 
-    // 6. 海外猎奇与暗黑叙事 (overseas) - 5
-    makeEntry("ovs_laoa", "斯奎奇大王牢A", "9133646850", "overseas", 1.33),
-    makeEntry("ovs_hailanzhu", "海兰珠阿婶", "8013891733", "overseas", 1.31),
-    makeEntry("ovs_jokie", "Jokielicious", "1930723113", "overseas", 1.45),
-    makeEntry("ovs_paingod", "paingod", "1433680664", "overseas", 0.62),
-    makeEntry("ovs_wanshiwu", "纯洁的万事屋", "3359389864", "overseas", 1.19)
+    // 6. 海外猎奇与暗黑叙事 (overseas) - 9
+    makeEntry("ovs_wanshiwu", "纯洁的万事屋", "3359389864", "overseas", 1.28),
+    makeEntry("ovs_jokie", "Jokielicious", "1930723113", "overseas", 1.23),
+    makeEntry("ovs_hailanzhu", "海兰珠阿婶", "8013891733", "overseas", 1.19),
+    makeEntry("ovs_yujiaolong", "盖世英雄玉椒龙", "5230132970", "overseas", 1.15, [], [], "海外新鲜事与涉日台情绪吐槽"),
+    makeEntry("ovs_laoa", "斯奎奇大王牢A", "9133646850", "overseas", 1.11),
+    makeEntry("ovs_feizhouqiuzhang", "某非洲酋长2", "7881210242", "overseas", 1.11, [], [], "对日负面搬运与海外吐槽"),
+    makeEntry("ovs_xiaobaitu", "你的充气小白兔", "1676492475", "overseas", 0.91, [], [], "海外新鲜事与美欧负面叙事"),
+    makeEntry("ovs_huangbin", "黄斌", "1604224063", "overseas", 0.84, [], [], "海外观察与立场型时政博主"),
+    makeEntry("ovs_paingod", "paingod", "1433680664", "overseas", 0.80)
   ];
 
   const DEFAULT_BASELINE_EXCLUSIONS = [
@@ -219,6 +232,7 @@
       hoverAutoCheck: false,
       confirmBeforeBlock: true,
       exemptFollowedUsers: true,
+      strictSharedExemption: false,
       muteDefaultMode: "collapse",
       warnThreshold: 3.1,
       highThreshold: 4.7,
@@ -319,6 +333,7 @@
     base.hoverAutoCheck = Boolean(src.hoverAutoCheck);
     base.confirmBeforeBlock = src.confirmBeforeBlock !== false;
     base.exemptFollowedUsers = src.exemptFollowedUsers !== false;
+    base.strictSharedExemption = Boolean(src.strictSharedExemption);
     base.muteDefaultMode = src.muteDefaultMode === "hide" ? "hide" : "collapse";
 
     const rawWarn = Number(src.warnThreshold);
@@ -615,6 +630,8 @@
         ].filter(Boolean);
         const sharedWithViewer = !simulateVisitor && entryUids.some((u) => viewerSet.has(u));
         const baseWeight = Number(entry.weight) || 1.0;
+        const isCore = entry.category !== "stock" && baseWeight >= 0.85;
+        const sharedExempt = sharedWithViewer && (Boolean(st.strictSharedExemption) || !isCore);
         hitByEntryId.set(entry.id, {
           id: entry.id,
           uid: entry.uid || "",
@@ -622,8 +639,10 @@
           category: entry.category,
           categoryLabel: (CATEGORY_META[entry.category] && CATEGORY_META[entry.category].shortLabel) || entry.category,
           weight: baseWeight,
-          effectiveWeight: sharedWithViewer ? 0 : baseWeight,
+          effectiveWeight: sharedExempt ? 0 : baseWeight,
+          isCore,
           sharedWithViewer,
+          sharedExempt,
           matchedNames: new Set([name || entry.screenName]),
           viaAlias: matchedAlias || ""
         });
@@ -644,7 +663,9 @@
         categoryLabel: rec.categoryLabel,
         weight: rec.weight,
         effectiveWeight: rec.effectiveWeight,
+        isCore: rec.isCore,
         sharedWithViewer: rec.sharedWithViewer,
+        sharedExempt: rec.sharedExempt,
         matchedNames: Array.from(rec.matchedNames),
         viaAlias: rec.viaAlias
       });
@@ -701,7 +722,8 @@
     const scannedCount = Number(meta.scannedCount) || list.length;
     const friendsCount = Math.max(Number(meta.friendsCount) || 0, scannedCount);
     const denom = 1 + 0.28 * Math.max(0, Math.log(Math.max(friendsCount, 150) / 350));
-    let score = rawScore > 0 ? rawScore / denom : 0;
+    // Asymmetric damping: total following count only damps pan-topic / stock layer, never dilutes high-purity core anchors
+    let score = (coreSum > 0 || panEffective > 0) ? (coreSum + panEffective / denom) : 0;
 
     // Specificity Gate: pure pan-topic / pure stock overlap without any >=0.78 anchor cannot cross warnThreshold
     if (score > 0 && maxNonStockWeight < 0.78 && nonStockCats.size < 3) {
@@ -830,6 +852,7 @@
       payload.cacheTtlDays = st.cacheTtlDays;
       payload.followScanMaxPages = st.followScanMaxPages;
       payload.exemptFollowedUsers = st.exemptFollowedUsers;
+      payload.strictSharedExemption = st.strictSharedExemption;
       payload.enabledCategories = st.enabledCategories;
       payload.customFeatures = st.customFeatures;
       payload.disabledFeatureIds = st.disabledFeatureIds;
@@ -885,6 +908,7 @@
     if (data.cacheTtlDays !== undefined) next.cacheTtlDays = data.cacheTtlDays;
     if (data.followScanMaxPages !== undefined) next.followScanMaxPages = data.followScanMaxPages;
     if (data.exemptFollowedUsers !== undefined) next.exemptFollowedUsers = data.exemptFollowedUsers;
+    if (data.strictSharedExemption !== undefined) next.strictSharedExemption = data.strictSharedExemption;
 
     return normalizeState(next);
   }

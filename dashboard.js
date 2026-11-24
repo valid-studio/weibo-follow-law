@@ -220,7 +220,12 @@
       tdCats.textContent = cats || "-";
 
       const tdHits = document.createElement("td");
-      const hitNames = (r.hitItems || []).map((x) => x.name);
+      const hitNames = (r.hitItems || []).map((x) => {
+        if (x.sharedWithViewer) {
+          return x.sharedExempt ? `${x.name}(共同免计)` : `${x.name}(您也关注)`;
+        }
+        return x.name;
+      });
       tdHits.textContent = hitNames.slice(0, 8).join("、") || "-";
       if (hitNames.length > 0) {
         tdHits.title = hitNames.join("、");
@@ -272,6 +277,8 @@
     document.getElementById("wbr-cfg-cache-days").value = String(state.cacheTtlDays);
     document.getElementById("wbr-cfg-default-mode").value = state.muteDefaultMode;
     document.getElementById("wbr-cfg-exempt-followed").checked = state.exemptFollowedUsers;
+    const strictSharedEl = document.getElementById("wbr-cfg-strict-shared");
+    if (strictSharedEl) strictSharedEl.checked = Boolean(state.strictSharedExemption);
     document.getElementById("wbr-cfg-confirm-block").checked = state.confirmBeforeBlock;
     document.getElementById("wbr-cfg-hover-auto").checked = state.hoverAutoCheck;
     document.getElementById("wbr-cfg-autoscan").checked = state.autoScanViewport;
@@ -354,9 +361,11 @@
       const catShort = (Engine.CATEGORY_META[entry.category] && Engine.CATEGORY_META[entry.category].shortLabel) || entry.category;
       const txt = document.createElement("span");
       txt.textContent = `${entry.screenName} · ${catShort} · w=${entry.weight ?? 1}`;
+      txt.title = entry.note ? `${entry.screenName}（${entry.note}）` : entry.screenName;
       left.append(cb, txt);
       box.appendChild(left);
 
+      const isCoreEntry = entry.category !== "stock" && Number(entry.weight) >= 0.85;
       if (entry.isCustom) {
         const del = document.createElement("button");
         del.type = "button";
@@ -368,6 +377,11 @@
           showToast(`已删除 ${entry.screenName}`);
         });
         box.appendChild(del);
+      } else {
+        const tier = document.createElement("span");
+        tier.className = `wbr-tier-tag ${isCoreEntry ? "wbr-tier-core" : "wbr-tier-pan"}`;
+        tier.textContent = isCoreEntry ? "核心" : "伴生";
+        box.appendChild(tier);
       }
       matrixWrap.appendChild(box);
     }
@@ -691,10 +705,12 @@
     }
 
     document.getElementById("wbr-save-prefs-btn").addEventListener("click", async () => {
+      const strictSharedEl = document.getElementById("wbr-cfg-strict-shared");
       const next = Engine.normalizeState({
         ...state,
         muteDefaultMode: document.getElementById("wbr-cfg-default-mode").value,
         exemptFollowedUsers: document.getElementById("wbr-cfg-exempt-followed").checked,
+        strictSharedExemption: strictSharedEl ? strictSharedEl.checked : false,
         confirmBeforeBlock: document.getElementById("wbr-cfg-confirm-block").checked,
         hoverAutoCheck: document.getElementById("wbr-cfg-hover-auto").checked,
         autoScanViewport: document.getElementById("wbr-cfg-autoscan").checked,

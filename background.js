@@ -797,7 +797,7 @@ if (typeof importScripts === "function") {
           return { ...fastEvaluated, fromCache: false };
         }
 
-        const maxPages = Math.min(10, Math.max(1, Number(params.maxPages || st.followScanMaxPages) || 9));
+        const maxPages = fullScan ? 10 : Math.min(10, Math.max(1, Number(params.maxPages || st.followScanMaxPages) || 9));
         let emitMaxPages = maxPages;
         let resolvedUid = inputUid;
         let resolvedName = inputName;
@@ -995,7 +995,8 @@ if (typeof importScripts === "function") {
                 viewerFollowing,
                 followViewer,
                 verifiedType,
-                isSelf
+                isSelf,
+                simulateVisitor
               });
               if (!interim.exemptReason && interim.level === "high") {
                 scanMode = "fast_high";

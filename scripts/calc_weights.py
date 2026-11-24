@@ -90,8 +90,8 @@ def calibrate_feature_weights(
     baseline_exclusion_rate: float = 0.25,
     min_net_enrichment: float = 0.04,
     lor_scale: float = 0.38,
-    min_weight: float = 0.12,
-    max_weight: float = 1.45,
+    min_weight: float = 0.15,
+    max_weight: float = 1.28,
 ) -> Dict[str, Any]:
     """
     Screen candidate feature accounts and compute dual-source calibrated weights.
@@ -225,10 +225,11 @@ def evaluate_following(
     friends_count: int = 200,
     preset: str = "standard",
     shared_viewer_ids: Optional[Set[str]] = None,
+    strict_shared_exemption: bool = False,
     exempt_reason: str = "",
 ) -> Dict[str, Any]:
     """
-    Exact Python mirror of evaluateFollowing() in shared/radar_engine.js.
+    Exact Python mirror of evaluateFollowing() in shared/radar_engine.js (v1.5.5).
     """
     thresholds = SENSITIVITY_PRESETS.get(preset, SENSITIVITY_PRESETS["standard"])
     warn_th = thresholds["warn"]
@@ -248,13 +249,17 @@ def evaluate_following(
             continue
         shared = acc_id in shared_set
         w = float(feat["weight"])
+        is_core = feat["category"] != "stock" and w >= 0.85
+        shared_exempt = shared and (strict_shared_exemption or not is_core)
         hits_by_id[acc_id] = {
             "id": acc_id,
             "name": feat["name"],
             "category": feat["category"],
             "weight": w,
-            "effective_weight": 0.0 if shared else w,
+            "is_core": is_core,
+            "effective_weight": 0.0 if shared_exempt else w,
             "shared_with_viewer": shared,
+            "shared_exempt": shared_exempt,
         }
 
     hit_items = sorted(hits_by_id.values(), key=lambda x: -x["weight"])
@@ -301,7 +306,8 @@ def evaluate_following(
 
     eff_friends = max(int(friends_count or 0), len(following_ids))
     denom = 1.0 + 0.28 * max(0.0, math.log(max(eff_friends, 150) / 350.0))
-    score = raw_score / denom if raw_score > 0 else 0.0
+    # Asymmetric damping (v1.5.5): denom only damps pan-topic/stock layer, never dilutes core anchors
+    score = (core_sum + pan_effective / denom) if (core_sum > 0 or pan_effective > 0) else 0.0
 
     # Specificity Gate
     if score > 0 and max_non_stock_weight < 0.78 and len(non_stock_cats) < 3:
@@ -455,12 +461,13 @@ def run_demo() -> None:
             300,
         ),
         (
-            "Scenario C: High-following account (friends=5000, 1 social + 1 mega media)",
+            "Scenario C: High-following passerby (friends=5000, 1 social + 1 mega media)",
             ["demo_kol_social_a", "demo_mega_media"],
             5000,
+            None,
         ),
         (
-            "Scenario D: Multi-category core echo-chamber co-occurrence",
+            "Scenario D: High-following target with multi-core anchors (friends=2500, asymmetric damping)",
             [
                 "demo_kol_politics_a",
                 "demo_kol_politics_b",
@@ -468,16 +475,37 @@ def run_demo() -> None:
                 "demo_kol_military_a",
                 "demo_kol_social_a",
             ],
-            320,
+            2500,
+            None,
+        ),
+        (
+            "Scenario E: Shared-following stratification (viewer also follows 1 core + 1 pan)",
+            [
+                "demo_kol_politics_a",
+                "demo_kol_politics_b",
+                "demo_kol_overseas_a",
+                "demo_kol_military_a",
+                "demo_mega_media",
+            ],
+            360,
+            {"demo_kol_politics_a", "demo_mega_media"},
         ),
     ]
-    for title, follow_list, friends_cnt in scenarios:
-        ev = evaluate_following(follow_list, features, exclusions, friends_count=friends_cnt)
+    for item in scenarios:
+        title, follow_list, friends_cnt = item[0], item[1], item[2]
+        shared_ids = item[3] if len(item) > 3 else None
+        ev = evaluate_following(
+            follow_list,
+            features,
+            exclusions,
+            friends_count=friends_cnt,
+            shared_viewer_ids=shared_ids,
+        )
         print(
             f"   - {title}\n"
             f"     hits={ev['effective_hit_count']} (excluded={ev['excluded_count']}), "
-            f"raw={ev['raw_score']}, denom={ev['denom']}, score={ev['score']}, "
-            f"level={ev['level']}, prob={ev['probability']}%"
+            f"core={ev['core_sum']}, pan_eff={ev['pan_effective']}, denom={ev['denom']}, "
+            f"score={ev['score']}, level={ev['level']}, prob={ev['probability']}%"
         )
 
 

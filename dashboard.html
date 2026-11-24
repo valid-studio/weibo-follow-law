@@ -39,7 +39,7 @@
             <p class="wbr-hint">在微博首页、转发与评论区中自动生效</p>
           </div>
           <div class="wbr-row-gap">
-            <button id="wbr-sync-official" type="button" class="wbr-btn">🔄 同步微博黑名单</button>
+            <button id="wbr-sync-official" type="button" class="wbr-btn"><svg class="wbr-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.35-3.6"/><path d="M13.5 2.5v2.8h-2.8"/></svg><span>同步微博黑名单</span></button>
             <button id="wbr-export-muted" type="button" class="wbr-btn">导出名单</button>
             <label class="wbr-btn wbr-file-btn">
               导入名单
@@ -92,20 +92,20 @@
           <p class="wbr-hint">贴入微博链接，帮您逐个看看评论和转发者的关注倾向</p>
           <input id="wbr-post-url-input" type="text" class="wbr-input" placeholder="贴入微博网页链接（如 https://weibo.com/...）" />
           <div class="wbr-row-gap wbr-mt8">
-            <button id="wbr-scan-post-btn" type="button" class="wbr-btn wbr-btn-primary">🔍 开始排查</button>
+            <button id="wbr-scan-post-btn" type="button" class="wbr-btn wbr-btn-primary"><svg class="wbr-ico" viewBox="0 0 16 16" aria-hidden="true"><circle cx="7" cy="7" r="4.8"/><path d="M10.7 10.7L14 14"/></svg><span>开始排查</span></button>
           </div>
         </div>
 
         <div class="wbr-card">
           <h3>排查最近来评论我的陌生人</h3>
-          <p class="wbr-hint">自动跳过您已关注的人，帮您挑出近期评论区里倾向明显的高风险账号</p>
+          <p class="wbr-hint">自动跳过您已关注的人，帮您挑出近期评论区里倾向明显的账号</p>
           <div class="wbr-row-gap wbr-mt8">
             <label class="wbr-inline-label">
               查看最近
               <input id="wbr-self-posts-limit" type="number" min="1" max="10" value="5" class="wbr-input-sm" />
               条微博
             </label>
-            <button id="wbr-scan-self-btn" type="button" class="wbr-btn wbr-btn-primary">🧹 开始排查</button>
+            <button id="wbr-scan-self-btn" type="button" class="wbr-btn wbr-btn-primary"><svg class="wbr-ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.5 3.5h11l-4.2 5v4l-2.6 1.2V8.5l-4.2-5z"/></svg><span>开始排查</span></button>
           </div>
         </div>
       </div>
@@ -200,6 +200,10 @@
             <span>已关注 / 互关博主默认免预警</span>
           </label>
           <label class="wbr-pref-check">
+            <input id="wbr-cfg-strict-shared" type="checkbox" />
+            <span>严格同圈豁免（共同关注的高纯度核心号也免计分；关闭时仅免计泛话题与股评号）</span>
+          </label>
+          <label class="wbr-pref-check">
             <input id="wbr-cfg-confirm-block" type="checkbox" />
             <span>点击「官方拉黑」前二次确认</span>
           </label>
@@ -230,7 +234,8 @@
       <details class="wbr-advanced-box wbr-mt12">
         <summary>规则原理与开源说明</summary>
         <ul class="wbr-info-list wbr-mt8">
-          <li><strong>防误伤计分：</strong>去热门校准 + 饱和阻尼，单人权重低于预警线（标准 3.1 分），偶有关注不触发标警；默认豁免本人、已关注、蓝V机构号及共同关注。</li>
+          <li><strong>非对称防误伤计分：</strong>内置 85 项脱敏校准参考特征；总关注数仅对泛话题与股评层做对数饱和阻尼，不冲淡高纯度核心特征；单人权重低于预警线（标准 3.1 分），偶有关注不触发标警，结果仅为统计倾向参考。</li>
+          <li><strong>默认豁免边界：</strong>豁免本人、已关注博主及官方蓝V机构号；共同关注默认免计泛话题与股评号，高纯度核心号保留计分并标注「您也关注」（可按需开启上方「严格同圈豁免」）。</li>
           <li><strong>隐私与开源：</strong>仅申请 <code>storage</code> 权限，配置与 7 天查询缓存仅存本地 · <a href="https://github.com/valid-studio/weibo-follow-law" target="_blank" rel="noopener noreferrer">GitHub 开源仓库</a></li>
         </ul>
       </details>
@@ -242,11 +247,11 @@
             <h3>识别参数微调</h3>
             <div class="wbr-grid-4 wbr-mt8">
               <label class="wbr-field">
-                <span>轻度提醒加权分（标准 3.1）</span>
+                <span>轻度倾向提醒分（标准 3.1）</span>
                 <input id="wbr-cfg-warn" type="number" min="0.5" max="20" step="0.1" class="wbr-input" />
               </label>
               <label class="wbr-field">
-                <span>高匹配预警加权分（标准 4.7）</span>
+                <span>显著特征预警分（标准 4.7）</span>
                 <input id="wbr-cfg-high" type="number" min="0.5" max="30" step="0.1" class="wbr-input" />
               </label>
               <label class="wbr-field">

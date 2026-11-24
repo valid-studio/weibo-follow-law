@@ -217,10 +217,22 @@ body {
   color: #334155;
 }
 
+.wbr-ico {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .wbr-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 5px;
   height: 34px;
   padding: 0 13px;
   border-radius: 8px;
@@ -229,7 +241,9 @@ body {
   color: #1e293b;
   font-size: 12px;
   font-weight: 600;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
 }
 
 .wbr-btn:hover {
@@ -343,10 +357,17 @@ body {
   vertical-align: middle;
 }
 
+.wbr-card > .wbr-input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+
 .wbr-table th {
   color: #64748b;
   font-weight: 600;
   background: #f8fafc;
+  white-space: nowrap;
 }
 
 .wbr-preset-grid {
@@ -415,10 +436,16 @@ body {
 
 .wbr-pref-check {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   cursor: pointer;
   color: #334155;
+  line-height: 1.45;
+}
+
+.wbr-pref-check input[type="checkbox"] {
+  margin-top: 2px;
+  flex-shrink: 0;
 }
 
 .wbr-cat-grid {
@@ -436,6 +463,12 @@ body {
   border: 1px solid #e2e8f0;
   background: #f8fafc;
   cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.wbr-cat-toggle:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
 }
 
 .wbr-advanced-box {
@@ -507,10 +540,42 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
   padding: 8px 10px;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
+}
+
+.wbr-matrix-item .wbr-inline-label {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.wbr-matrix-item .wbr-inline-label span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wbr-tier-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.wbr-tier-core {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.wbr-tier-pan {
+  background: #f1f5f9;
+  color: #64748b;
 }
 
 .wbr-pill {
