@@ -215,11 +215,23 @@
 }
 
 .wbr-hover-inline-mention {
+  position: relative;
   height: 18px;
   line-height: 16px;
   padding: 0 6px;
   margin: 0 3px;
   font-size: 11px;
+}
+
+.wbr-hover-check-btn.wbr-hover-inline-mention::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  bottom: -5px;
+  left: -5px;
+  background: transparent;
+  pointer-events: auto;
 }
 
 /* v1.5.0 Profile inline trigger button (replaces full-width banner) */

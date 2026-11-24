@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "微博关注列表定律",
   "short_name": "关注列表定律",
-  "version": "1.5.5",
+  "version": "1.5.6",
   "homepage_url": "https://github.com/valid-studio/weibo-follow-law",
   "minimum_chrome_version": "111",
   "description": "基于关注列表定律的微博关注倾向参考与降噪工具：辅助提示显著特征倾向账号、支持本地一键屏蔽折叠与黑名单管理，让微博浏览更清净。",

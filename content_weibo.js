@@ -101,7 +101,14 @@
     let hoverHideTimer = null;
     let hoverCurrentHost = null;
     let hoverCurrentUser = null;
+    let hoverCurrentAnchor = null;
+    let hoverCurrentMountMode = "";
+    let hoverCurrentIsInline = false;
     let hoverDelegationBound = false;
+    const HOVER_HIDE_DELAY_MS = 240;
+    const HOVER_CORRIDOR_PAD_X = 12;
+    const HOVER_CORRIDOR_PAD_Y = 14;
+    let lastUserCardTrigger = null;
     let accountDetectTriggered = false;
     let lastAutoStampAt = 0;
     let scrollPumpTimer = null;
@@ -482,11 +489,29 @@
     function extractUidFromHref(href) {
       if (!href) return "";
       const s = String(href);
-      if (s.includes("bigFans") || s.includes("page.star.weibo.com")) return "";
+      if (
+        s.includes("bigFans") ||
+        s.includes("page.star.weibo.com") ||
+        s.includes("vip.weibo") ||
+        s.includes("/u/page/follow") ||
+        s.includes("/u/page/fans")
+      ) {
+        return "";
+      }
       const m = s.match(/\/u\/(\d{5,})/);
       if (m) return m[1];
       const m2 = s.match(/^(?:https?:)?\/\/weibo\.com\/(\d{5,})(?:[/?#]|$)/);
-      return m2 ? m2[1] : "";
+      if (m2) return m2[1];
+      const m3 = s.match(/^\/(\d{5,})(?:[?#]|$)/);
+      return m3 ? m3[1] : "";
+    }
+
+    function extractUidFromCardStatHref(href) {
+      if (!href) return "";
+      const s = String(href);
+      const m = s.match(/\/u\/page\/(?:follow|fans)\/(\d{5,})/);
+      if (m) return m[1];
+      return extractUidFromHref(s);
     }
 
     function extractUidFromUsercard(val) {
@@ -542,6 +567,18 @@
       "img"
     ].join(", ");
 
+    const OFFICIAL_USERCARD_SELECTOR = [
+      ".woo-pop-main",
+      ".woo-pop-wrap-main",
+      ".woo-popper",
+      '[class*="UserCard"]',
+      '[class*="userCard" i]',
+      '[class*="PopCard" i]',
+      '[class*="user_card" i]',
+      '[class*="UserPop" i]',
+      '[role="tooltip"]'
+    ].join(", ");
+
     function extractCleanProfileName(el) {
       if (!el) return "";
       let raw = "";
@@ -554,7 +591,7 @@
       } else {
         raw = Engine.normalizeText(el.textContent || "").replace(/^@/, "");
       }
-      if (!raw || isPureNumericBadgeText(raw)) return "";
+      if (!raw || isStatOrCertText(raw)) return "";
       return raw;
     }
 
@@ -564,13 +601,55 @@
     }
 
     function isPureNumericBadgeText(txt) {
-      return /^\d+\+?$/.test(txt);
+      const s = Engine.normalizeText(txt);
+      if (!s) return false;
+      return /^[\d,]+(?:\.\d+)?\s*(?:[万亿千百kKwWmMbB]\+?|\+)?$/.test(s);
+    }
+
+    function isStatOrCertText(txt) {
+      const s = Engine.normalizeText(txt);
+      if (!s) return false;
+      if (isPureNumericBadgeText(s)) return true;
+      if (
+        /^(?:关注|粉丝|微博|转|赞|评|全部|更多|阅读|播放|获赞|粉丝数|关注数|微博数|铁粉|真爱粉|钻粉|金粉|银粉|新粉)\s*[:：]?\s*[\d,.万亿千百kKwWmMbB+]*$/i.test(
+          s
+        )
+      ) {
+        return true;
+      }
+      if (/^(?:微博认证|个人认证|官方认证|机构认证|V认证|认证信息|简介|IP属地)\s*[:：]?/i.test(s)) {
+        return true;
+      }
+      if (/^(?:\+?\s*关注|已关注|互相关注|悄悄关注|回粉|留言|私信|编辑资料|发私信|拉黑|举报|屏蔽)$/.test(s)) {
+        return true;
+      }
+      return false;
+    }
+
+    function isStatOrFollowCountLink(a) {
+      if (!a) return false;
+      const href = String(a.getAttribute("href") || "");
+      if (
+        href.includes("/u/page/follow") ||
+        href.includes("/u/page/fans") ||
+        /[?&](?:tabtype|tabid|relate)=(?:follow|fans)\b/i.test(href)
+      ) {
+        return true;
+      }
+      if (
+        a.closest &&
+        a.closest('[class*="fans" i], [class*="follow" i], [class*="count" i], [class*="num" i], [class*="stat" i]')
+      ) {
+        const raw = Engine.normalizeText(a.textContent || "").replace(/^@/, "");
+        if (!raw || isStatOrCertText(raw)) return true;
+      }
+      return false;
     }
 
     function extractNameFromAnchor(a) {
-      if (!a) return "";
+      if (!a || isStatOrFollowCountLink(a)) return "";
       const titleRaw = Engine.normalizeText(a.getAttribute("title") || "").replace(/^@/, "");
-      if (titleRaw && !isPureNumericBadgeText(titleRaw)) {
+      if (titleRaw && !isStatOrCertText(titleRaw)) {
         return titleRaw;
       }
       let raw = "";
@@ -583,7 +662,7 @@
       } else {
         raw = Engine.normalizeText(a.textContent || "").replace(/^@/, "");
       }
-      if (!raw || isPureNumericBadgeText(raw)) return "";
+      if (!raw || isStatOrCertText(raw)) return "";
       return raw;
     }
 
@@ -659,6 +738,12 @@
       if (href.includes("bigFans") || href.includes("page.star.weibo.com") || href.includes("vip.weibo")) {
         return true;
       }
+      if (isStatOrFollowCountLink(a)) return true;
+      const rawText = Engine.normalizeText(a.textContent || "").replace(/^@/, "");
+      if (rawText && isStatOrCertText(rawText)) {
+        const titleRaw = Engine.normalizeText(a.getAttribute("title") || "").replace(/^@/, "");
+        if (!titleRaw || isStatOrCertText(titleRaw)) return true;
+      }
       if (a.querySelector('img, svg, .woo-avatar-main, [class*="Avatar"], [class*="avatar"], .woo-badge')) {
         const txt = extractNameFromAnchor(a);
         if (!txt) return true;
@@ -693,16 +778,23 @@
       for (const a of container.querySelectorAll(USER_LINK_SELECTOR)) {
         if (isDecorativeUserLink(a)) continue;
         const txt = extractNameFromAnchor(a);
-        if (!txt && !a.getAttribute("data-wbr-uname")) continue;
+        const stamped = Engine.normalizeText(a.getAttribute("data-wbr-uname"));
+        if (!txt && (!stamped || isStatOrCertText(stamped))) continue;
         return a;
       }
       return null;
     }
 
+    function sanitizeScreenName(name) {
+      const clean = Engine.normalizeText(name).replace(/^@/, "");
+      if (!clean || isStatOrCertText(clean)) return "";
+      return clean;
+    }
+
     function extractUserFromContainer(container, fallbackAnchor) {
       // Prefer anchor attributes (live from Vue) before container attributes (may lag during recycle)
       const liveAnchorName = extractNameFromAnchor(fallbackAnchor);
-      const stampedAnchorName = Engine.normalizeText(fallbackAnchor && fallbackAnchor.getAttribute("data-wbr-uname"));
+      const stampedAnchorName = sanitizeScreenName(fallbackAnchor && fallbackAnchor.getAttribute("data-wbr-uname"));
       const anchorAttrStale = Boolean(
         liveAnchorName && stampedAnchorName && !namesMatchInsensitive(liveAnchorName, stampedAnchorName)
       );
@@ -713,7 +805,7 @@
         (!anchorAttrStale ? Engine.normalizeUid(fallbackAnchor && fallbackAnchor.getAttribute("data-wbr-uid")) : "");
       const anchorName = liveAnchorName || stampedAnchorName;
 
-      const containerName = Engine.normalizeText(container && container.getAttribute("data-wbr-uname"));
+      const containerName = sanitizeScreenName(container && container.getAttribute("data-wbr-uname"));
       const containerStale = Boolean(
         anchorName && containerName && !namesMatchInsensitive(anchorName, containerName)
       );
@@ -1422,6 +1514,18 @@
     }
 
     async function triggerUserCheck(user, anchorEl, forceRefresh = false, extraOpts = {}) {
+      const cleanUid = Engine.normalizeUid(user && user.uid);
+      const cleanName = sanitizeScreenName(user && user.screenName);
+      if (!cleanUid && !cleanName) {
+        showToast("未能识别该用户账号，请悬停头像或昵称后再试");
+        return null;
+      }
+      const safeUser = {
+        ...(user || {}),
+        uid: cleanUid,
+        screenName: cleanName
+      };
+      user = safeUser;
       const fullScan = Boolean(extraOpts && extraOpts.fullScan);
       const forceDeepScan = Boolean(extraOpts && extraOpts.forceDeepScan);
       const simulateVisitor = Boolean(extraOpts && extraOpts.simulateVisitor);
@@ -1692,6 +1796,9 @@
       clearTimeout(hoverTimer);
       hoverCurrentHost = null;
       hoverCurrentUser = null;
+      hoverCurrentAnchor = null;
+      hoverCurrentMountMode = "";
+      hoverCurrentIsInline = false;
       if (hoverBtnEl) {
         hoverBtnEl.__wbrUser = null;
         if (hoverBtnEl.parentNode) {
@@ -1708,7 +1815,7 @@
       }
     }
 
-    function scheduleHideHoverBtn(delay = 80) {
+    function scheduleHideHoverBtn(delay = HOVER_HIDE_DELAY_MS) {
       if (hoverHideTimer) clearTimeout(hoverHideTimer);
       hoverHideTimer = setTimeout(() => {
         hoverHideTimer = null;
@@ -1727,10 +1834,12 @@
         screenName: user.screenName,
         profileHint: user.profileHint
       };
+      hoverBtnEl.classList.add("wbr-hover-check-btn");
+      hoverBtnEl.classList.toggle("is-scanning", isScanning);
+      hoverBtnEl.classList.toggle("is-checked", !isScanning && Boolean(cached));
       if (isScanning) {
         hoverBtnEl.textContent = "检测中…";
         hoverBtnEl.disabled = true;
-        hoverBtnEl.className = "wbr-hover-check-btn is-scanning";
         hoverBtnEl.title = "正在查询关注列表…";
       } else if (cached) {
         const isFlagged = Boolean(
@@ -1745,12 +1854,10 @@
           setBtnIconLabel(hoverBtnEl, "check", "已查", 11);
         }
         hoverBtnEl.disabled = false;
-        hoverBtnEl.className = "wbr-hover-check-btn is-checked";
         hoverBtnEl.title = "点击查看关注列表检测详情";
       } else {
         setBtnIconLabel(hoverBtnEl, "search", "查成分", 11);
         hoverBtnEl.disabled = false;
-        hoverBtnEl.className = "wbr-hover-check-btn";
         hoverBtnEl.title = "看看TA平时关注哪些圈子";
       }
     }
@@ -1769,8 +1876,13 @@
           hoverHideTimer = null;
         }
       });
-      btn.addEventListener("pointerleave", () => {
-        scheduleHideHoverBtn(80);
+      btn.addEventListener("pointerleave", (ev) => {
+        if (isInlineHoverProtected() && isPointerInHoverCorridor(ev, ev && ev.relatedTarget)) {
+          return;
+        }
+        if (!hoverHideTimer) {
+          scheduleHideHoverBtn(HOVER_HIDE_DELAY_MS);
+        }
       });
       btn.addEventListener("click", async (ev) => {
         ev.stopPropagation();
@@ -1883,7 +1995,129 @@
       return { hostEl: link, user, mount, anchorEl: link };
     }
 
-    function resolveHoverTargetFromNode(rawTarget) {
+    function findOfficialUserCardAncestor(node) {
+      if (!node || !node.closest) return null;
+      const popMarked = node.closest('[data-wbr-usercard-pop="1"]');
+      if (popMarked) return popMarked;
+      let cur = node.closest(OFFICIAL_USERCARD_SELECTOR);
+      while (cur) {
+        if (isOfficialUserCardPopover(cur)) return cur;
+        cur = cur.parentElement ? cur.parentElement.closest(OFFICIAL_USERCARD_SELECTOR) : null;
+      }
+      return null;
+    }
+
+    function recordUserCardTriggerContext(resolved) {
+      if (!resolved || !resolved.user) return;
+      const uid = Engine.normalizeUid(resolved.user.uid);
+      const screenName = sanitizeScreenName(resolved.user.screenName);
+      if (!uid && !screenName) return;
+      const targetEl = resolved.anchorEl || resolved.hostEl;
+      if (targetEl && findOfficialUserCardAncestor(targetEl)) return;
+      lastUserCardTrigger = {
+        uid,
+        screenName,
+        profileHint: resolved.user.profileHint || null,
+        anchorRect: resolveAnchorRect(targetEl),
+        ts: Date.now()
+      };
+    }
+
+    function hasUsableHoverRect(rect) {
+      return Boolean(rect && (rect.width > 0 || rect.height > 0));
+    }
+
+    function isInlineHoverProtected() {
+      return Boolean(
+        hoverBtnEl &&
+          hoverBtnEl.isConnected &&
+          (hoverCurrentIsInline ||
+            (hoverBtnEl.classList && hoverBtnEl.classList.contains("wbr-hover-inline-mention")))
+      );
+    }
+
+    function isNodeInInlineBridge(node) {
+      if (!node || !hoverBtnEl || !hoverBtnEl.isConnected) return false;
+      if (node === hoverBtnEl || (hoverBtnEl.contains && hoverBtnEl.contains(node))) return true;
+      if (hoverCurrentAnchor && hoverCurrentAnchor.isConnected) {
+        if (
+          node === hoverCurrentAnchor ||
+          (hoverCurrentAnchor.contains && hoverCurrentAnchor.contains(node))
+        ) {
+          return true;
+        }
+        let cur = hoverCurrentAnchor.nextSibling;
+        let steps = 0;
+        while (cur && steps < 12) {
+          if (cur === hoverBtnEl) break;
+          if (cur === node || (cur.contains && cur.contains(node))) return true;
+          cur = cur.nextSibling;
+          steps += 1;
+        }
+      }
+      return false;
+    }
+
+    function isPointerInHoverCorridor(ev, targetNode) {
+      if (!isInlineHoverProtected()) return false;
+      if (isNodeInInlineBridge(targetNode)) return true;
+
+      const anchorRect =
+        hoverCurrentAnchor &&
+        hoverCurrentAnchor.isConnected &&
+        typeof hoverCurrentAnchor.getBoundingClientRect === "function"
+          ? hoverCurrentAnchor.getBoundingClientRect()
+          : null;
+      const btnRect =
+        hoverBtnEl && typeof hoverBtnEl.getBoundingClientRect === "function"
+          ? hoverBtnEl.getBoundingClientRect()
+          : null;
+      const hasCoords =
+        Boolean(ev) &&
+        typeof ev.clientX === "number" &&
+        typeof ev.clientY === "number" &&
+        Number.isFinite(ev.clientX) &&
+        Number.isFinite(ev.clientY);
+
+      if (hasCoords && hasUsableHoverRect(anchorRect) && hasUsableHoverRect(btnRect)) {
+        const minX = Math.min(anchorRect.left, btnRect.left) - HOVER_CORRIDOR_PAD_X;
+        const maxX = Math.max(anchorRect.right, btnRect.right) + HOVER_CORRIDOR_PAD_X;
+        const minY = Math.min(anchorRect.top, btnRect.top) - HOVER_CORRIDOR_PAD_Y;
+        const maxY = Math.max(anchorRect.bottom, btnRect.bottom) + HOVER_CORRIDOR_PAD_Y;
+        return ev.clientX >= minX && ev.clientX <= maxX && ev.clientY >= minY && ev.clientY <= maxY;
+      }
+
+      if (!hasUsableHoverRect(anchorRect) || !hasUsableHoverRect(btnRect)) {
+        if (targetNode && hoverBtnEl.parentNode && targetNode === hoverBtnEl.parentNode) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function isExplicitUserLinkTarget(rawTarget) {
+      if (!rawTarget || !rawTarget.closest) return false;
+      const link = rawTarget.closest(USER_LINK_SELECTOR);
+      if (!link) return false;
+      const href = String(link.getAttribute("href") || "");
+      if (href.includes("bigFans") || href.includes("page.star.weibo.com") || href.includes("vip.weibo")) {
+        return false;
+      }
+      if (isInsideWeiboChromeUi(link) || isStatOrFollowCountLink(link)) {
+        return false;
+      }
+      const rawText = Engine.normalizeText(link.textContent || "").replace(/^@/, "");
+      if (rawText && isStatOrCertText(rawText)) {
+        const titleRaw = Engine.normalizeText(link.getAttribute("title") || "").replace(/^@/, "");
+        if (!titleRaw || isStatOrCertText(titleRaw)) return false;
+      }
+      return true;
+    }
+
+    function resolveHoverTargetFromNode(rawTarget, ev = null) {
+      if (rawTarget && rawTarget.nodeType === 3) {
+        rawTarget = rawTarget.parentElement;
+      }
       if (!rawTarget || rawTarget.nodeType !== 1) return null;
       if (hoverBtnEl && (rawTarget === hoverBtnEl || (hoverBtnEl.contains && hoverBtnEl.contains(rawTarget)))) {
         return { keepExisting: true };
@@ -1891,11 +2125,22 @@
       if (rawTarget.closest && rawTarget.closest(".wbr-popover, .wbr-drawer, .wbr-live-widget, .wbr-muted-banner, .wbr-comment-toolbar, .wbr-shield-banner, [data-wbr-usercard-pop='1'], .wbr-usercard-bar, .wbr-usercard-btn")) {
         return null;
       }
+      if (findOfficialUserCardAncestor(rawTarget)) {
+        return null;
+      }
 
       // 0. Inline @user / //@repost-chain mention (including hovering its adjacent fan badge)
       const inlineMention = findHoveredInlineMention(rawTarget);
       if (inlineMention) {
         return inlineMention;
+      }
+
+      // Guard inline hover corridor: prevent outer feed/retweet/comment containers from stealing hoverBtnEl
+      if (isInlineHoverProtected() && !isExplicitUserLinkTarget(rawTarget)) {
+        if (isPointerInHoverCorridor(ev, rawTarget)) {
+          return { keepExisting: true };
+        }
+        return null;
       }
 
       // 1. Sub-comment (.item2)
@@ -1988,7 +2233,7 @@
       const directLink = rawTarget.closest ? rawTarget.closest(USER_LINK_SELECTOR) : null;
       if (directLink && !isDecorativeUserLink(directLink)) {
         const user = extractUserFromContainer(null, directLink);
-        if (user && (user.uid || user.screenName) && !Engine.findMutedMatch(user, state)) {
+        if (user && (user.uid || sanitizeScreenName(user.screenName)) && !Engine.findMutedMatch(user, state)) {
           const mount = directLink.parentElement ? { host: directLink.parentElement, mode: "afterAnchor" } : null;
           return { hostEl: directLink, user, mount, anchorEl: directLink };
         }
@@ -1999,7 +2244,7 @@
 
     function mountHoverBtnAt(resolved) {
       if (!resolved || !resolved.mount || !resolved.mount.host) {
-        scheduleHideHoverBtn(80);
+        scheduleHideHoverBtn(HOVER_HIDE_DELAY_MS);
         return;
       }
       if (hoverHideTimer) {
@@ -2010,18 +2255,21 @@
       const { hostEl, user, mount, anchorEl } = resolved;
       const prevKey = getUserKey(hoverCurrentUser);
       const nextKey = getUserKey(user);
+      const extraClass = mount.extraClass || "";
+      const mode = mount.mode || "append";
       hoverCurrentHost = hostEl;
       hoverCurrentUser = user;
+      hoverCurrentAnchor = anchorEl || null;
+      hoverCurrentMountMode = mode;
+      hoverCurrentIsInline = extraClass === "wbr-hover-inline-mention";
       refreshHoverButtonState();
 
-      const extraClass = mount.extraClass || "";
       btn.classList.toggle("wbr-hover-in-info", extraClass === "wbr-actions-in-info");
       btn.classList.toggle("wbr-hover-header-right", extraClass === "wbr-actions-header-right");
       btn.classList.toggle("wbr-hover-row-end", extraClass === "wbr-actions-row-end" || extraClass === "wbr-hover-row-end");
-      btn.classList.toggle("wbr-hover-inline-mention", extraClass === "wbr-hover-inline-mention");
+      btn.classList.toggle("wbr-hover-inline-mention", hoverCurrentIsInline);
 
       const host = mount.host;
-      const mode = mount.mode || "append";
       const insertRef = mode === "afterAnchor" && anchorEl ? findAnchorFollowingInsertRef(anchorEl, true) : null;
       const alreadyMountedAtTarget =
         btn.parentNode === host &&
@@ -2076,9 +2324,19 @@
             hideHoverCheckBtn();
             return;
           }
-          const resolved = resolveHoverTargetFromNode(t);
+          const cardPop = findOfficialUserCardAncestor(t);
+          if (cardPop) {
+            hideHoverCheckBtn();
+            if (!cardPop.hasAttribute("data-wbr-usercard-pop")) {
+              processOfficialUserCardsSafe();
+            }
+            return;
+          }
+          const resolved = resolveHoverTargetFromNode(t, ev);
           if (!resolved) {
-            scheduleHideHoverBtn(80);
+            if (!hoverHideTimer) {
+              scheduleHideHoverBtn(HOVER_HIDE_DELAY_MS);
+            }
             return;
           }
           if (resolved.keepExisting) {
@@ -2088,12 +2346,37 @@
             }
             return;
           }
+          recordUserCardTriggerContext(resolved);
           mountHoverBtnAt(resolved);
         },
         { passive: true }
       );
+      doc.addEventListener(
+        "pointermove",
+        (ev) => {
+          if (!isInlineHoverProtected()) return;
+          const rawTarget = ev && ev.target;
+          const t = rawTarget && rawTarget.nodeType === 3 ? rawTarget.parentElement : rawTarget;
+          if (isNodeInInlineBridge(t) || isPointerInHoverCorridor(ev, t)) {
+            if (hoverHideTimer) {
+              clearTimeout(hoverHideTimer);
+              hoverHideTimer = null;
+            }
+            return;
+          }
+          if (isExplicitUserLinkTarget(t)) {
+            return;
+          }
+          if (!hoverHideTimer) {
+            scheduleHideHoverBtn(HOVER_HIDE_DELAY_MS);
+          }
+        },
+        { passive: true }
+      );
       doc.addEventListener("pointerleave", () => {
-        scheduleHideHoverBtn(80);
+        if (!hoverHideTimer) {
+          scheduleHideHoverBtn(HOVER_HIDE_DELAY_MS);
+        }
       });
     }
 
@@ -3248,98 +3531,277 @@
       if (cardEl.closest && cardEl.closest('.wbr-popover, .wbr-drawer, .wbr-live-widget, .wbr-toast, .wbr-comment-toolbar, .wbr-shield-banner')) {
         return false;
       }
-      if (cardEl.closest && cardEl.closest('article, [class*="Feed_wrap"], .wbpro-list, [data-wbr-comment-row], [class*="ProfileHeader"], [data-wbr-profile-header]')) {
+      if (
+        cardEl.matches &&
+        cardEl.matches(
+          'article, [class*="Feed_wrap"], .wbpro-list, [data-wbr-comment-row], [class*="ProfileHeader"], [data-wbr-profile-header], .vue-recycle-scroller__item-view, .wbpro-scroller-item'
+        )
+      ) {
         return false;
       }
-      const inMain = Boolean(cardEl.closest && cardEl.closest("main"));
-      const inPopLayer = Boolean(cardEl.closest && cardEl.closest('.woo-pop-main, .woo-pop-wrap-main, [role="tooltip"]'));
-      if (inMain && !inPopLayer) return false;
-
-      const parentCard = cardEl.parentElement
-        ? cardEl.parentElement.closest('.woo-pop-main, [class*="UserCard"], [class*="userCard" i], [class*="PopCard" i], [class*="user_card" i]')
-        : null;
-      if (parentCard && !cardEl.matches('.woo-pop-main')) return false;
+      if (cardEl.querySelector && cardEl.querySelector('article, [class*="Feed_wrap"], .wbpro-list, [data-wbr-comment-row]')) {
+        return false;
+      }
 
       if (cardEl.hidden || (cardEl.style && cardEl.style.display === "none")) return false;
+      let cs = null;
       if (typeof win.getComputedStyle === "function") {
         try {
-          const cs = win.getComputedStyle(cardEl);
+          cs = win.getComputedStyle(cardEl);
           if (cs && (cs.display === "none" || cs.visibility === "hidden")) return false;
         } catch (_) {}
       }
 
+      const inScopedContainer = Boolean(
+        cardEl.closest &&
+          cardEl.closest(
+            'article, [class*="Feed_wrap"], .wbpro-list, [data-wbr-comment-row], [class*="ProfileHeader"], [data-wbr-profile-header], main'
+          )
+      );
+      const inPopLayer = Boolean(
+        cardEl.closest &&
+          cardEl.closest(
+            '.woo-pop-main, .woo-pop-wrap-main, .woo-popper, [class*="popper" i], [class*="PopCard" i], [class*="UserPop" i], [role="tooltip"]'
+          )
+      );
+      const isFloatingPos = Boolean(
+        (cardEl.style && (cardEl.style.position === "fixed" || cardEl.style.position === "absolute")) ||
+          (cs && (cs.position === "fixed" || cs.position === "absolute"))
+      );
+      if (inScopedContainer && !inPopLayer && !isFloatingPos) return false;
+      if (
+        cardEl.closest &&
+        cardEl.closest(".vue-recycle-scroller__item-view, .wbpro-scroller-item") &&
+        !inPopLayer &&
+        !isFloatingPos
+      ) {
+        return false;
+      }
+
+      const parentCard = cardEl.parentElement
+        ? cardEl.parentElement.closest(
+            '.woo-pop-main, .woo-pop-wrap-main, .woo-popper, [class*="UserCard"], [class*="userCard" i], [class*="PopCard" i], [class*="user_card" i], [class*="UserPop" i]'
+          )
+        : null;
+      if (parentCard && !cardEl.matches(".woo-pop-main")) return false;
+
       const txt = Engine.normalizeText(cardEl.textContent || "");
-      const hasFollowStats = /关注\s*[\d万.+]+/.test(txt) && /粉丝\s*[\d万.+]+/.test(txt);
+      const hasFollowStats = /关注\s*[\d,万亿.+]+/.test(txt) && /粉丝\s*[\d,万亿.+]+/.test(txt);
       const hasActionBtn = Array.from(cardEl.querySelectorAll('button, [role="button"], .woo-button-main, a')).some((el) => {
         if (isWbrOwnedNode(el)) return false;
         const bt = Engine.normalizeText(el.textContent || "");
         return /^(?:\+?\s*关注|已关注|互相关注|悄悄关注|回粉|留言|私信|编辑资料)$/.test(bt);
       });
 
-      if (cardEl.querySelector('.woo-pop-item-main') && !hasFollowStats && !hasActionBtn) {
+      if (cardEl.querySelector(".woo-pop-item-main") && !hasFollowStats && !hasActionBtn) {
         return false;
       }
       return hasFollowStats || hasActionBtn;
     }
 
+    function isCardTriggerSpatiallyCompatible(cardEl, triggerRect) {
+      if (!triggerRect || (triggerRect.width <= 0 && triggerRect.height <= 0 && triggerRect.left === 0 && triggerRect.top === 0)) {
+        return true;
+      }
+      const cardRect = resolveAnchorRect(cardEl);
+      if (!cardRect || (cardRect.width <= 0 && cardRect.height <= 0)) {
+        return true;
+      }
+      const cx = cardRect.left + cardRect.width / 2;
+      const cy = cardRect.top + cardRect.height / 2;
+      const tx = triggerRect.left + triggerRect.width / 2;
+      const ty = triggerRect.top + triggerRect.height / 2;
+      const dx = Math.abs(cx - tx);
+      const dy = Math.abs(cy - ty);
+      return dx <= Math.max(480, cardRect.width + 180) && dy <= Math.max(460, cardRect.height + 180);
+    }
+
     function extractUserFromOfficialCard(cardEl) {
       if (!cardEl) return null;
-      const stampedName = Engine.normalizeText(cardEl.getAttribute("data-wbr-uname"));
+      const stampedName = sanitizeScreenName(cardEl.getAttribute("data-wbr-uname"));
       const stampedUid = Engine.normalizeUid(cardEl.getAttribute("data-wbr-uid"));
 
-      let bestAnchor = null;
-      for (const a of cardEl.querySelectorAll(USER_LINK_SELECTOR)) {
-        if (isDecorativeUserLink(a) || isWbrOwnedNode(a)) continue;
+      const excludedCardScopeSelector = [
+        "button",
+        '[role="button"]',
+        ".woo-button-main",
+        '[class*="verify" i]',
+        '[class*="cert" i]',
+        '[class*="auth" i]',
+        '[class*="intro" i]',
+        '[class*="desc" i]',
+        '[class*="bio" i]'
+      ].join(", ");
+
+      let bestNameAnchor = null;
+      let avatarAnchor = null;
+      let avatarUid = "";
+      let statHrefUid = "";
+
+      for (const a of cardEl.querySelectorAll('a[href], [usercard]')) {
+        if (isWbrOwnedNode(a) || isInsideWeiboChromeUi(a)) continue;
+        const href = String(a.getAttribute("href") || "");
+        if (href.includes("bigFans") || href.includes("page.star.weibo.com") || href.includes("vip.weibo")) {
+          continue;
+        }
+        const inExcludedMeta = Boolean(a.closest && a.closest(excludedCardScopeSelector));
+        if (inExcludedMeta) continue;
+
+        if (isStatOrFollowCountLink(a)) {
+          if (!statHrefUid) {
+            statHrefUid = extractUidFromCardStatHref(href) || extractUidFromUsercard(a.getAttribute("usercard"));
+          }
+          continue;
+        }
+
+        const directUid =
+          extractUidFromHref(href) ||
+          extractUidFromUsercard(a.getAttribute("usercard")) ||
+          Engine.normalizeUid(a.getAttribute("data-wbr-uid"));
         const linkText = extractNameFromAnchor(a);
-        if (linkText && /^(?:关注|粉丝|微博|全部|更多)\s*[\d万.+]*$/.test(linkText)) continue;
-        if (linkText && /^(?:\+?\s*关注|已关注|互相关注|悄悄关注|回粉|留言|私信|编辑资料)$/.test(linkText)) continue;
-        const linkUid = extractUidFromHref(a.getAttribute("href")) || extractUidFromUsercard(a.getAttribute("usercard"));
-        if (linkText || linkUid) {
-          bestAnchor = a;
-          break;
+
+        if (linkText && !isStatOrCertText(linkText)) {
+          if (!bestNameAnchor) {
+            bestNameAnchor = a;
+          }
+          if (directUid && !avatarUid) {
+            avatarUid = directUid;
+            avatarAnchor = a;
+          }
+          continue;
+        }
+
+        if (directUid && !avatarUid) {
+          avatarUid = directUid;
+          avatarAnchor = a;
         }
       }
 
-      let domName = bestAnchor ? extractNameFromAnchor(bestAnchor) : "";
+      let domName = bestNameAnchor ? extractNameFromAnchor(bestNameAnchor) : "";
       if (!domName) {
-        const nameCandidates = cardEl.querySelectorAll('[class*="name" i], [class*="nick" i], [class*="title" i], strong, h3, h4');
+        const nameCandidates = cardEl.querySelectorAll(
+          '[class*="name" i], [class*="nick" i], [class*="title" i], strong, h3, h4'
+        );
         for (const el of nameCandidates) {
-          if (isWbrOwnedNode(el) || el.closest('button, [role="button"], .woo-button-main')) continue;
+          if (isWbrOwnedNode(el)) continue;
+          if (
+            el.closest &&
+            el.closest(
+              `${excludedCardScopeSelector}, [class*="stat" i], [class*="fans" i], [class*="follow" i], [class*="count" i], [class*="num" i]`
+            )
+          ) {
+            continue;
+          }
           const cand = extractCleanProfileName(el);
-          if (!cand || cand.length > 40) continue;
-          if (/^(?:关注|粉丝|微博|全部|更多)\s*[\d万.+]*$/.test(cand)) continue;
-          if (/^(?:\+?\s*关注|已关注|互相关注|悄悄关注|回粉|留言|私信|编辑资料)$/.test(cand)) continue;
+          if (!cand || cand.length > 40 || isStatOrCertText(cand)) continue;
           domName = cand;
           break;
         }
       }
 
-      if (bestAnchor) {
-        const user = extractUserFromContainer(cardEl, bestAnchor);
-        if (!user.screenName && domName) user.screenName = domName;
-        if (user.uid || user.screenName) return { user, anchorEl: bestAnchor };
+      if (!domName) {
+        const textNodes = cardEl.querySelectorAll("a, span, div, p, strong, h1, h2, h3, h4");
+        for (const el of textNodes) {
+          if (isWbrOwnedNode(el)) continue;
+          if (
+            el.closest &&
+            el.closest(
+              `${excludedCardScopeSelector}, [class*="stat" i], [class*="fans" i], [class*="follow" i], [class*="count" i], [class*="num" i]`
+            )
+          ) {
+            continue;
+          }
+          const hasNonInlineChild = Array.from(el.children || []).some(
+            (ch) => !ch.matches || !ch.matches('svg, img, i, .woo-badge, [class*="badge" i], [class*="icon" i]')
+          );
+          if (hasNonInlineChild) continue;
+          const cand = extractCleanProfileName(el);
+          if (!cand || cand.length > 40 || isStatOrCertText(cand)) continue;
+          if (/^(?:V\d*|SVIP|VIP|博主|作者)$/i.test(cand)) continue;
+          if (/关注\s*[\d,万亿.+]+/.test(cand) || /粉丝\s*[\d,万亿.+]+/.test(cand)) continue;
+          domName = cand;
+          break;
+        }
+      }
+
+      let uid = "";
+      let screenName = "";
+      let profileHint = null;
+
+      const primaryAnchor = bestNameAnchor || avatarAnchor;
+      if (primaryAnchor) {
+        const extractedFromPrimary = extractUserFromContainer(cardEl, primaryAnchor);
+        uid = extractedFromPrimary.uid || avatarUid || statHrefUid || "";
+        screenName = sanitizeScreenName(extractedFromPrimary.screenName) || domName || "";
+        if (extractedFromPrimary.profileHint) {
+          profileHint = extractedFromPrimary.profileHint;
+        }
       }
 
       const staleCard = Boolean(domName && stampedName && !namesMatchInsensitive(domName, stampedName));
-      const uid = !staleCard ? stampedUid : "";
-      const screenName = domName || stampedName;
+      if (!uid) {
+        uid = avatarUid || statHrefUid || (!staleCard ? stampedUid : "");
+      }
+      if (!screenName) {
+        screenName = domName || (!staleCard ? stampedName : "");
+      }
+
+      // Auxiliary verification & fallback from recent hover trigger (strictly checked for time, space, and identity)
+      const nowTs = Date.now();
+      const freshTrigger =
+        lastUserCardTrigger && nowTs - lastUserCardTrigger.ts <= 5000 ? lastUserCardTrigger : null;
+      const boundTrigger =
+        cardEl.__wbrTriggerCtx &&
+        (!domName ||
+          !cardEl.__wbrTriggerCtx.screenName ||
+          namesMatchInsensitive(domName, cardEl.__wbrTriggerCtx.screenName))
+          ? cardEl.__wbrTriggerCtx
+          : null;
+      const candidateTrigger = boundTrigger || freshTrigger;
+
+      if (candidateTrigger) {
+        if (screenName && candidateTrigger.screenName && namesMatchInsensitive(screenName, candidateTrigger.screenName)) {
+          if (!uid && candidateTrigger.uid) uid = candidateTrigger.uid;
+          if (!profileHint && candidateTrigger.profileHint) profileHint = candidateTrigger.profileHint;
+          cardEl.__wbrTriggerCtx = candidateTrigger;
+        } else if (uid && candidateTrigger.uid && uid === candidateTrigger.uid) {
+          if (!screenName && candidateTrigger.screenName) screenName = sanitizeScreenName(candidateTrigger.screenName);
+          if (!profileHint && candidateTrigger.profileHint) profileHint = candidateTrigger.profileHint;
+          cardEl.__wbrTriggerCtx = candidateTrigger;
+        } else if (
+          !uid &&
+          !screenName &&
+          freshTrigger &&
+          nowTs - freshTrigger.ts <= 2500 &&
+          isCardTriggerSpatiallyCompatible(cardEl, freshTrigger.anchorRect)
+        ) {
+          uid = freshTrigger.uid || "";
+          screenName = sanitizeScreenName(freshTrigger.screenName);
+          profileHint = freshTrigger.profileHint || null;
+          cardEl.__wbrTriggerCtx = freshTrigger;
+        }
+      }
+
+      screenName = sanitizeScreenName(screenName);
+      uid = Engine.normalizeUid(uid);
       if (!uid && !screenName) return null;
 
-      const profileHint = {};
-      if (!staleCard) {
+      if (!profileHint && !staleCard) {
+        const hintBag = {};
         const rawFollowing = cardEl.getAttribute("data-wbr-ufollowing");
-        if (rawFollowing === "1" || rawFollowing === "0") profileHint.viewerFollowing = rawFollowing === "1";
+        if (rawFollowing === "1" || rawFollowing === "0") hintBag.viewerFollowing = rawFollowing === "1";
         const rawVType = cardEl.getAttribute("data-wbr-uvtype");
-        if (rawVType !== null && /^-?\d+$/.test(rawVType)) profileHint.verifiedType = Number(rawVType);
+        if (rawVType !== null && /^-?\d+$/.test(rawVType)) hintBag.verifiedType = Number(rawVType);
         const rawFriends = cardEl.getAttribute("data-wbr-ufriends");
-        if (rawFriends !== null && /^\d+$/.test(rawFriends)) profileHint.friendsCount = Number(rawFriends);
+        if (rawFriends !== null && /^\d+$/.test(rawFriends)) hintBag.friendsCount = Number(rawFriends);
         const rawFollowers = cardEl.getAttribute("data-wbr-ufollowers");
-        if (rawFollowers !== null && /^\d+$/.test(rawFollowers)) profileHint.followersCount = Number(rawFollowers);
+        if (rawFollowers !== null && /^\d+$/.test(rawFollowers)) hintBag.followersCount = Number(rawFollowers);
+        if (Object.keys(hintBag).length > 0) profileHint = hintBag;
       }
 
       return {
-        user: Object.keys(profileHint).length > 0 ? { uid, screenName, profileHint } : { uid, screenName },
-        anchorEl: bestAnchor || null
+        user: profileHint && Object.keys(profileHint).length > 0 ? { uid, screenName, profileHint } : { uid, screenName },
+        anchorEl: bestNameAnchor || avatarAnchor || null
       };
     }
 
@@ -3364,7 +3826,7 @@
       const statCandidates = Array.from(cardEl.querySelectorAll("div, p")).filter((el) => {
         if (el === cardEl || isWbrOwnedNode(el)) return false;
         const t = Engine.normalizeText(el.textContent || "");
-        return /关注\s*[\d万.+]+/.test(t) && /粉丝\s*[\d万.+]+/.test(t) && t.length < 40;
+        return /关注\s*[\d,万亿.+]+/.test(t) && /粉丝\s*[\d,万亿.+]+/.test(t) && t.length < 50;
       });
       if (statCandidates.length > 0) {
         const lastStat = statCandidates[statCandidates.length - 1];
@@ -3448,9 +3910,7 @@
     }
 
     function processOfficialUserCards(collectedUids) {
-      const rawCandidates = Array.from(
-        doc.querySelectorAll('.woo-pop-main, .woo-pop-wrap-main, [class*="UserCard"], [class*="userCard" i], [class*="PopCard" i], [class*="user_card" i], [role="tooltip"]')
-      ).filter(isOfficialUserCardPopover);
+      const rawCandidates = Array.from(doc.querySelectorAll(OFFICIAL_USERCARD_SELECTOR)).filter(isOfficialUserCardPopover);
 
       if (rawCandidates.length === 0) return;
 
@@ -3459,7 +3919,11 @@
 
       for (const cardEl of cards) {
         const extracted = extractUserFromOfficialCard(cardEl);
-        if (!extracted || !extracted.user) continue;
+        if (!extracted || !extracted.user) {
+          const oldBar = cardEl.querySelector('.wbr-usercard-bar[data-wbr-usercard-bar="1"]');
+          if (oldBar) oldBar.remove();
+          continue;
+        }
         const { user, anchorEl } = extracted;
         cardEl.setAttribute("data-wbr-usercard-pop", "1");
 
@@ -3522,6 +3986,18 @@
         }
 
         syncUserCardBtnUi(btn, user, cached, mutedMatch);
+      }
+    }
+
+    function processOfficialUserCardsSafe() {
+      isApplyingDom = true;
+      try {
+        processOfficialUserCards(new Set());
+      } finally {
+        if (activeObserver && typeof activeObserver.takeRecords === "function") {
+          activeObserver.takeRecords();
+        }
+        isApplyingDom = false;
       }
     }
 
@@ -4253,8 +4729,14 @@
       renderLiveWidget,
       syncLiveWidgetSafeOffset,
       isInsideWeiboChromeUi,
+      isPureNumericBadgeText,
+      isStatOrCertText,
+      isOfficialUserCardPopover,
+      extractUserFromOfficialCard,
+      extractUserFromContainer,
       extractNameFromAnchor,
       isDecorativeUserLink,
+      resolveHoverTargetFromNode,
       getBadgeAppearance,
       startObserver,
       getPageRegistry: () => pageRegistry,

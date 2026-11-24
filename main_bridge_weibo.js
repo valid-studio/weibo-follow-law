@@ -633,6 +633,8 @@
     if (bag.cardInfo && (bag.cardInfo.idstr || bag.cardInfo.id || bag.cardInfo.screen_name)) return bag.cardInfo;
     if (bag.cardData && (bag.cardData.idstr || bag.cardData.id || bag.cardData.screen_name)) return bag.cardData;
     if (bag.info && (bag.info.idstr || bag.info.id || bag.info.screen_name)) return bag.info;
+    if (bag.card && (bag.card.idstr || bag.card.id || bag.card.screen_name)) return bag.card;
+    if (bag.userData && (bag.userData.idstr || bag.userData.id || bag.userData.screen_name)) return bag.userData;
     if (bag.user && (bag.user.idstr || bag.user.id || bag.user.screen_name)) return bag.user;
     if (bag.data && bag.data.idstr && bag.data.screen_name) return bag.data;
     if (bag.item && bag.item.idstr && bag.item.screen_name) return bag.item;
@@ -656,10 +658,40 @@
     return null;
   }
 
+  function isStatOrNumericText(txt) {
+    const s = String(txt || "").replace(/\s+/g, " ").trim();
+    if (!s) return false;
+    if (/^[\d,]+(?:\.\d+)?\s*(?:[万亿千百kKwWmMbB]\+?|\+)?$/.test(s)) return true;
+    if (
+      /^(?:关注|粉丝|微博|转|赞|评|全部|更多|阅读|播放|获赞|粉丝数|关注数|微博数|铁粉|真爱粉|钻粉|金粉|银粉|新粉)\s*[:：]?\s*[\d,.万亿千百kKwWmMbB+]*$/i.test(
+        s
+      )
+    ) {
+      return true;
+    }
+    if (/^(?:微博认证|个人认证|官方认证|机构认证|V认证|认证信息|简介|IP属地)\s*[:：]?/i.test(s)) {
+      return true;
+    }
+    return false;
+  }
+
+  function isStatAnchorHref(href) {
+    const s = String(href || "");
+    return (
+      s.includes("bigFans") ||
+      s.includes("page.star.weibo.com") ||
+      s.includes("vip.weibo") ||
+      s.includes("/u/page/follow") ||
+      s.includes("/u/page/fans") ||
+      /[?&](?:tabtype|tabid|relate)=(?:follow|fans)\b/i.test(s)
+    );
+  }
+
   function extractCleanAnchorText(a) {
     if (!a) return "";
+    if (isStatAnchorHref(a.getAttribute("href"))) return "";
     const titleRaw = String(a.getAttribute("title") || "").replace(/^@/, "").trim();
-    if (titleRaw && !/^\d+\+?$/.test(titleRaw)) {
+    if (titleRaw && !isStatOrNumericText(titleRaw)) {
       return titleRaw;
     }
     let raw = "";
@@ -675,15 +707,18 @@
       raw = String(a.textContent || "");
     }
     raw = raw.replace(/^@/, "").trim();
-    if (!raw || /^\d+\+?$/.test(raw)) return "";
+    if (!raw || isStatOrNumericText(raw)) return "";
     return raw;
   }
 
   function extractAnchorUid(a) {
     if (!a) return "";
     const href = String(a.getAttribute("href") || "");
-    if (href.includes("bigFans") || href.includes("page.star.weibo.com") || href.includes("vip.weibo")) return "";
-    const mHref = href.match(/\/u\/(\d{5,})/) || href.match(/^(?:https?:)?\/\/weibo\.com\/(\d{5,})(?:[/?#]|$)/);
+    if (isStatAnchorHref(href)) return "";
+    const mHref =
+      href.match(/\/u\/(\d{5,})/) ||
+      href.match(/^(?:https?:)?\/\/weibo\.com\/(\d{5,})(?:[/?#]|$)/) ||
+      href.match(/^\/(\d{5,})(?:[?#]|$)/);
     if (mHref) return mHref[1];
     const uc = String(a.getAttribute("usercard") || "");
     const mUc = uc.match(/(?:^|&)id=(\d{5,})/) || uc.match(/^(\d{5,})$/);
@@ -693,7 +728,7 @@
   function syncAnchorEl(a) {
     if (!a) return;
     const href = a.getAttribute("href") || "";
-    if (href.includes("bigFans") || href.includes("page.star.weibo.com") || href.includes("vip.weibo")) return;
+    if (isStatAnchorHref(href)) return;
     const text = extractCleanAnchorText(a);
     const oldUname = String(a.getAttribute("data-wbr-uname") || "").trim();
     const oldUid = String(a.getAttribute("data-wbr-uid") || "").trim();
@@ -901,7 +936,9 @@
   }
 
   function stampUserCardPopovers() {
-    const cards = document.querySelectorAll('.woo-pop-main, .woo-pop-wrap-main, [class*="UserCard"], [class*="userCard" i], [class*="PopCard" i]');
+    const cards = document.querySelectorAll(
+      '.woo-pop-main, .woo-pop-wrap-main, .woo-popper, [class*="UserCard"], [class*="userCard" i], [class*="PopCard" i], [class*="user_card" i], [class*="UserPop" i], [role="tooltip"]'
+    );
     for (const card of cards) {
       const vueUser = extractVueUserFromEl(card);
       if (vueUser) {
@@ -924,7 +961,7 @@
     lastHoverTarget = rawTarget;
 
     let a = rawTarget.closest ? rawTarget.closest('a[href^="/n/"], a[href*="weibo.com/n/"], a[usercard], a[href*="/u/"]') : null;
-    if (a && ((a.getAttribute("href") || "").includes("bigFans") || (a.getAttribute("href") || "").includes("page.star.weibo.com"))) {
+    if (a && isStatAnchorHref(a.getAttribute("href"))) {
       a = null;
     }
     if (!a && rawTarget.closest) {
